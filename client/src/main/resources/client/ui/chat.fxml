@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="client.ui.ChatController"
+            prefWidth="860" prefHeight="580"
+            style="-fx-background-color: #d4d0c8;">
+
+    <!-- Banner offline (topo) -->
+    <top>
+        <HBox fx:id="offlineBanner" visible="false" managed="false"
+              alignment="CENTER"
+              style="-fx-background-color: red; -fx-padding: 7 16;">
+            <Label text="Sem conexao — reconectando..."
+                   style="-fx-font-weight: bold; -fx-font-size: 12px;"/>
+        </HBox>
+    </top>
+
+    <!-- Sidebar: lista de salas -->
+    <left>
+        <VBox minWidth="150" maxWidth="150"
+              style="-fx-background-color: #c0c0c0; -fx-border-color: #808080; -fx-border-width: 0 1 0 0;">
+            <Label text="SALAS"
+                   style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 8 8 4 8;"/>
+            <ListView fx:id="roomList" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </left>
+
+    <!-- Centro: mensagens + input -->
+    <center>
+        <VBox>
+            <ListView fx:id="messageList" VBox.vgrow="ALWAYS">
+                <padding><Insets top="4" right="8" bottom="0" left="8"/></padding>
+            </ListView>
+
+            <HBox spacing="4" style="-fx-padding: 6 8 8 8;">
+                <TextField fx:id="messageField" HBox.hgrow="ALWAYS"
+                           promptText="Mensagem..."
+                           onKeyPressed="#onKeyPressed"/>
+                <Button fx:id="sendButton" text="Enviar" onAction="#onSend"/>
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>
