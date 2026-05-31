@@ -7,27 +7,31 @@
 <VBox xmlns="http://javafx.com/javafx/17"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="client.ui.LoginController"
-      alignment="CENTER" spacing="6"
-      prefWidth="320" prefHeight="400"
-      style="-fx-background-color: #d4d0c8;">
-    <padding><Insets top="30" right="30" bottom="30" left="30"/></padding>
+      stylesheets="@style.css"
+      alignment="CENTER" spacing="12"
+      prefWidth="360" prefHeight="420"
+      style="-fx-background-color: #1e1e2e;">
+    <padding><Insets top="48" right="48" bottom="48" left="48"/></padding>
 
     <Label text="ZapIF"
-           style="-fx-font-size: 22px; -fx-font-weight: bold;"/>
+           style="-fx-text-fill: #cdd6f4; -fx-font-size: 28px; -fx-font-weight: bold;"/>
 
-    <Label text="Bem-vindo"
-           style="-fx-font-size: 12px;"/>
+    <Label text="Bem-vindo de volta"
+           style="-fx-text-fill: #6c7086; -fx-font-size: 12px;"/>
 
-    <TextField fx:id="usernameField" promptText="Nome de usuário"/>
-    <PasswordField fx:id="passwordField" promptText="Senha"/>
+    <VBox spacing="8">
+        <TextField fx:id="usernameField" promptText="Nome de usuário"/>
+        <PasswordField fx:id="passwordField" promptText="Senha"/>
+    </VBox>
 
-    <HBox spacing="4">
+    <HBox spacing="8">
         <Button fx:id="loginButton" text="Entrar" onAction="#onLogin"
+                styleClass="button,primary"
                 maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
         <Button fx:id="registerButton" text="Cadastrar" onAction="#onRegister"
                 maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
     </HBox>
 
     <Label fx:id="statusLabel" text="Conectando..."
-           style="-fx-font-size: 11px;"/>
+           style="-fx-text-fill: #585b70; -fx-font-size: 11px;"/>
 </VBox>

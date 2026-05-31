@@ -1,0 +1,324 @@
+@startuml class_diagram
+title Chat App — Class Diagram
+
+skinparam classAttributeIconSize 0
+skinparam groupInheritance 2
+
+' ─────────────────────────────────────────────────────────────────
+' PACKAGES
+' ─────────────────────────────────────────────────────────────────
+
+package "client" {
+
+    class Main <<Application>> {
+        - {static} connection : Connection
+        + start(stage : Stage) : void
+        + stop() : void
+        + {static} getConnection() : Connection
+        + {static} main(args : String[]) : void
+    }
+
+    package "model" {
+        class Message {
+            - {static} FMT : DateTimeFormatter
+            - sender : String
+            - text   : String
+            - time   : String
+            + Message(sender : String, text : String)
+            + getSender() : String
+            + getText()   : String
+            + toString()  : String
+        }
+
+        class User {
+            - name : String
+            + User(name : String)
+            + getName() : String
+        }
+    }
+
+    package "network" {
+        interface MessageListener {
+            + onMessage(message : String) : void
+        }
+
+        interface ConnectionStatusListener {
+            + onStatusChange(status : Connection.Status) : void
+        }
+
+        class Connection {
+            + {static} HOST            : String
+            + {static} PORT            : int
+            + {static} RETRY_SECONDS   : int
+            + {static} READ_TIMEOUT_MS : int
+            - msgListeners    : List<MessageListener>
+            - statusListeners : List<ConnectionStatusListener>
+            - scheduler       : ScheduledExecutorService
+            - socket          : Socket
+            - out             : PrintWriter
+            - running         : boolean
+            + Connection()
+            + send(message : String) : void
+            + addMessageListener(l : MessageListener) : void
+            + removeMessageListener(l : MessageListener) : void
+            + addStatusListener(l : ConnectionStatusListener) : void
+            + removeStatusListener(l : ConnectionStatusListener) : void
+            + disconnect() : void
+            - connectAsync() : void
+            - connect() : void
+            - readLoop(in : BufferedReader) : void
+            - scheduleRetry() : void
+            - closeSocket() : void
+            - notifyStatus(status : Status) : void
+        }
+
+        enum "Connection.Status" as Status {
+            CONNECTING
+            CONNECTED
+            DISCONNECTED
+        }
+
+        Connection +-- Status
+        Connection o-- "0..*" MessageListener
+        Connection o-- "0..*" ConnectionStatusListener
+    }
+
+    package "ui" {
+        class LoginController {
+            - {static} TIMEOUT_SECONDS : int
+            - usernameField  : TextField
+            - passwordField  : PasswordField
+            - statusLabel    : Label
+            - loginButton    : Button
+            - registerButton : Button
+            - connection     : Connection
+            - scheduler      : ScheduledExecutorService
+            - pendingTimeout : ScheduledFuture<?>
+            + initialize() : void
+            + onLogin() : void
+            + onRegister() : void
+            + onMessage(message : String) : void
+            - openChat(username : String, rooms : String[]) : void
+            - {static} validate(name : String, pass : String) : String
+            - scheduleTimeout() : void
+            - cancelTimeout() : void
+            - setStatus(text : String, enable : boolean) : void
+            - setBusy(busy : boolean) : void
+        }
+
+        class ChatController {
+            - roomList     : ListView<String>
+            - messageList  : ListView<String>
+            - messageField : TextField
+            - sendButton   : Button
+            - offlineBanner: HBox
+            - connection   : Connection
+            - username     : String
+            - currentRoom  : String
+            + initialize() : void
+            + setup(username : String, rooms : String[]) : void
+            - joinRoom(room : String) : void
+            + onSend() : void
+            + onKeyPressed(e : KeyEvent) : void
+            + onMessage(message : String) : void
+            - appendLine(line : String) : void
+            - scrollToBottom() : void
+        }
+    }
+}
+
+package "server" {
+
+    class Server {
+        + {static} PORT        : int
+        + {static} MAX_CLIENTS : int
+        + {static} main(args : String[]) : void
+    }
+
+    class ClientHandler <<Runnable>> {
+        + {static} MAX_USERNAME    : int
+        + {static} MIN_USERNAME    : int
+        + {static} MAX_TEXT        : int
+        + {static} READ_TIMEOUT_MS : int
+        + {static} PING_INTERVAL_S : int
+        - socket       : Socket
+        - out          : PrintWriter
+        - username     : String
+        - currentRoom  : Room
+        - pingScheduler: ScheduledExecutorService
+        - pingTask     : ScheduledFuture<?>
+        + ClientHandler(socket : Socket)
+        + run() : void
+        - handleMessage(raw : String) : void
+        - handleRegister(parts : String[]) : void
+        - handleLogin(parts : String[]) : void
+        - handleJoin(parts : String[]) : void
+        - handleMsg(parts : String[]) : void
+        + sendMessage(message : String) : void
+        - startHeartbeat() : void
+        - cleanup() : void
+        - {static} validateUsername(name : String) : String
+        - {static} sanitize(s : String, maxLen : int) : String
+    }
+
+    class Database {
+        - {static} DB_URL      : String
+        - {static} PBKDF2_ITER : int
+        - {static} SALT_BYTES  : int
+        - {static} HASH_BITS   : int
+        + {static} init() : void
+        + {static} register(nome : String, senha : String) : boolean
+        + {static} login(nome : String, senha : String) : boolean
+        + {static} roomExists(nome : String) : boolean
+        + {static} getRooms() : List<String>
+        + {static} getHistory(sala : String, limit : int) : List<String>
+        + {static} saveMessage(sala : String, usuario : String, texto : String) : void
+        - {static} connect() : Connection
+        - {static} generateSalt() : String
+        - {static} pbkdf2(password : String, saltB64 : String) : String
+    }
+
+    class Room {
+        - name    : String
+        - clients : CopyOnWriteArrayList<ClientHandler>
+        - {static} rooms : Map<String, Room>
+        - Room(name : String)
+        + {static} getOrCreate(name : String) : Room
+        + addClient(client : ClientHandler) : void
+        + removeClient(client : ClientHandler) : void
+        + broadcast(message : String, exclude : ClientHandler) : void
+        + getName() : String
+    }
+
+    class SessionRegistry {
+        - {static} online : Set<String>
+        + {static} tryRegister(username : String) : boolean
+        + {static} unregister(username : String) : void
+    }
+}
+
+' ─────────────────────────────────────────────────────────────────
+' RELATIONSHIPS
+' ─────────────────────────────────────────────────────────────────
+
+' Interfaces
+LoginController  ..|> MessageListener
+ChatController   ..|> MessageListener
+
+' Composition / dependencies — client
+Main             "1" *-- "1" Connection       : manages
+LoginController  "1" --> "1" Connection       : uses
+ChatController   "1" --> "1" Connection       : uses
+ChatController   ..>         Message          : creates
+LoginController  ..>         ChatController   : opens
+
+' Composition / dependencies — server
+Server           "1" *-- "0..*" ClientHandler : spawns
+ClientHandler    "1" --> "1"    Room          : joins
+ClientHandler    ..>             Database      : calls
+ClientHandler    ..>             SessionRegistry : calls
+Room             "1" o-- "0..*" ClientHandler : contains
+
+@enduml
+
+' ═══════════════════════════════════════════════════════════════════
+
+@startuml sequence_login
+title Login / Register Flow
+
+actor       User
+participant LoginController
+participant Connection
+participant "Server\nClientHandler" as CH
+database    Database
+
+User -> LoginController : clicks Login / Register
+
+LoginController -> LoginController : validate(username, password)
+
+alt invalid input
+    LoginController --> User : show error in statusLabel
+else valid input
+    LoginController -> Connection : send("LOGIN|user|pass")
+    LoginController -> LoginController : scheduleTimeout()
+
+    Connection -> CH : [TCP] "LOGIN|user|pass"
+
+    CH -> Database : login(user, pass)
+    Database --> CH : true / false
+
+    alt credentials OK
+        CH -> Database : getRooms()
+        Database --> CH : ["geral","off-topic","ajuda"]
+        CH -> Connection : "OK|LOGIN"
+        CH -> Connection : "ROOMS|geral,off-topic,ajuda"
+
+        Connection -> LoginController : onMessage("OK|LOGIN")
+        Connection -> LoginController : onMessage("ROOMS|geral,off-topic,ajuda")
+
+        LoginController -> LoginController : cancelTimeout()
+        LoginController -> ChatController  : openChat(username, rooms)
+    else credentials FAIL
+        CH -> Connection : "ERROR|Invalid credentials"
+        Connection -> LoginController : onMessage("ERROR|Invalid credentials")
+        LoginController -> LoginController : cancelTimeout()
+        LoginController --> User : show error message
+    end
+end
+
+@enduml
+
+' ═══════════════════════════════════════════════════════════════════
+
+@startuml sequence_chat
+title Send & Receive Message Flow
+
+actor       Alice
+participant ChatController as CC
+participant Connection     as CONN
+participant "Server\nClientHandler" as CH
+participant Room
+actor       Bob
+
+Alice -> CC   : types message + presses Enter
+CC    -> CONN : send("MSG|geral|Alice|hello world")
+
+CONN  -> CH   : [TCP] "MSG|geral|Alice|hello world"
+CH    -> CH   : validateUsername / sanitize
+CH    -> Room : broadcast("MSG|geral|Alice|hello world", exclude=null)
+
+Room  -> CH   : sendMessage(msg) → Alice's socket
+Room  -> CH   : sendMessage(msg) → Bob's socket
+
+CONN  -> CC   : onMessage("MSG|geral|Alice|hello world")
+CC    -> CC   : appendLine("[HH:mm] Alice: hello world")
+CC    -> CC   : scrollToBottom()
+
+CONN  -> "Bob\nChatController" as BCC : onMessage("MSG|geral|Alice|hello world")
+BCC   -> BCC  : appendLine("[HH:mm] Alice: hello world")
+BCC   -> Bob  : message appears in ListView
+
+@enduml
+
+' ═══════════════════════════════════════════════════════════════════
+
+@startuml sequence_heartbeat
+title Heartbeat (PING/PONG) Flow
+
+participant "Server\nClientHandler" as CH
+participant Connection
+
+CH    -> CH   : startHeartbeat() — every 20 s
+CH    -> CONN : "PING"
+CONN  -> CONN : readLoop detects "PING"
+CONN  -> CH   : "PONG"
+
+note over CH : resets socket read timeout (60 s)
+
+alt no PONG within timeout
+    CH -> CH : socket read times out → SocketTimeoutException
+    CH -> CH : cleanup() → SessionRegistry.unregister()
+    CONN -> CONN : scheduleRetry() after 5 s
+end
+
+@enduml

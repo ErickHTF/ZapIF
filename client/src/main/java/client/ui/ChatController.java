@@ -64,7 +64,7 @@ public class ChatController implements MessageListener {
 
     @FXML
     private void onSend() {
-        // '|' quebraria o protocolo — remove aqui e o servidor também remove por segurança
+        // '|' quebraria o protocolo, remove aqui e o servidor remove por segurança
         String raw  = messageField.getText().replace("|", "").trim();
         String text = raw.length() > 500 ? raw.substring(0, 500) : raw;
 

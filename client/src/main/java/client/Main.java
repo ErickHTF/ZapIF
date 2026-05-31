@@ -4,6 +4,7 @@ import client.network.Connection;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 public class Main extends Application {
@@ -18,10 +19,13 @@ public class Main extends Application {
         // e pode receber listeners imediatamente.
         connection = new Connection();
 
+        var iconStream = getClass().getResourceAsStream("/client/icon.png");
+        if (iconStream != null) stage.getIcons().add(new Image(iconStream));
+
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/client/ui/login.fxml"));
         stage.setScene(new Scene(loader.load()));
-        stage.setTitle("Chat");
-        stage.setResizable(false); // login tem tamanho fixo; chat.fxml habilita resize
+        stage.setTitle("ZapIF");
+        stage.setResizable(false);
         stage.show();
     }
 
