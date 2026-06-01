@@ -1,0 +1,131 @@
+/* -- cores base ---------------------------------------------------------- */
+.root {
+    -fx-background-color: #1e1e2e;
+}
+
+/* -- list view ----------------------------------------------------------- */
+.list-view {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+    -fx-padding: 0;
+}
+
+.list-view .list-cell,
+.list-view .list-cell:odd,
+.list-view .list-cell:even,
+.list-view .list-cell:empty {
+    -fx-background-color: transparent;
+    -fx-text-fill: #cdd6f4;
+    -fx-font-size: 13px;
+    -fx-padding: 8 12;
+    -fx-border-width: 0;
+}
+
+.list-view .list-cell:hover,
+.list-view .list-cell:odd:hover,
+.list-view .list-cell:even:hover {
+    -fx-background-color: #313244;
+}
+
+.list-view .list-cell:selected,
+.list-view .list-cell:selected:odd,
+.list-view .list-cell:selected:even {
+    -fx-background-color: #45475a;
+    -fx-text-fill: #cdd6f4;
+}
+
+/* -- sidebar sala list --------------------------------------------------- */
+#roomList .list-cell,
+#roomList .list-cell:odd,
+#roomList .list-cell:even,
+#roomList .list-cell:empty {
+    -fx-background-color: transparent;
+    -fx-text-fill: #a6adc8;
+    -fx-font-size: 13px;
+    -fx-padding: 8 14;
+}
+
+#roomList .list-cell:hover,
+#roomList .list-cell:odd:hover,
+#roomList .list-cell:even:hover {
+    -fx-background-color: #24243a;
+}
+
+#roomList .list-cell:selected,
+#roomList .list-cell:selected:odd,
+#roomList .list-cell:selected:even {
+    -fx-background-color: #2a2a45;
+    -fx-text-fill: #89b4fa;
+    -fx-font-weight: bold;
+}
+
+/* -- scroll bar ---------------------------------------------------------- */
+.scroll-bar {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .track {
+    -fx-background-color: transparent;
+}
+
+.scroll-bar .thumb {
+    -fx-background-color: #45475a;
+    -fx-background-radius: 0;
+}
+
+.scroll-bar .increment-button,
+.scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* -- text field ---------------------------------------------------------- */
+.text-field, .password-field {
+    -fx-background-color: #313244;
+    -fx-text-fill: #cdd6f4;
+    -fx-prompt-text-fill: #585b70;
+    -fx-border-color: #45475a;
+    -fx-border-width: 1;
+    -fx-padding: 10 12;
+    -fx-font-size: 13px;
+    -fx-highlight-fill: #89b4fa;
+    -fx-highlight-text-fill: #1e1e2e;
+}
+
+.text-field:focused, .password-field:focused {
+    -fx-border-color: #89b4fa;
+    -fx-background-color: #313244;
+}
+
+/* -- botoes -------------------------------------------------------------- */
+.button {
+    -fx-background-color: #313244;
+    -fx-text-fill: #cdd6f4;
+    -fx-border-color: #45475a;
+    -fx-border-width: 1;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-padding: 10 20;
+}
+
+.button:hover {
+    -fx-background-color: #45475a;
+}
+
+.button.primary {
+    -fx-background-color: #89b4fa;
+    -fx-text-fill: #1e1e2e;
+    -fx-font-weight: bold;
+    -fx-border-width: 0;
+}
+
+.button.primary:hover {
+    -fx-background-color: #74c7ec;
+}
+
+/* -- separator ----------------------------------------------------------- */
+.separator .line {
+    -fx-border-color: #313244;
+    -fx-border-width: 1 0 0 0;
+}
+

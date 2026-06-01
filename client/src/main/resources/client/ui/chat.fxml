@@ -6,42 +6,47 @@
 
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="client.ui.ChatController"
-            prefWidth="860" prefHeight="580"
-            style="-fx-background-color: #d4d0c8;">
+            fx:controller="client.ui.ControladorChat"
+            stylesheets="@style.css"
+            prefWidth="860" prefHeight="560"
+            style="-fx-background-color: #1e1e2e;">
 
-    <!-- Banner offline (topo) -->
+    <!-- Banner offline -->
     <top>
-        <HBox fx:id="offlineBanner" visible="false" managed="false"
+        <HBox fx:id="bannerOffline" visible="false" managed="false"
               alignment="CENTER"
-              style="-fx-background-color: red; -fx-padding: 7 16;">
-            <Label text="Sem conexao — reconectando..."
-                   style="-fx-font-weight: bold; -fx-font-size: 12px;"/>
+              style="-fx-background-color: #f38ba8; -fx-padding: 6 16;">
+            <Label text="Sem conexão — reconectando..."
+                   style="-fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 12px;"/>
         </HBox>
     </top>
 
-    <!-- Sidebar: lista de salas -->
+    <!-- Barra lateral -->
     <left>
-        <VBox minWidth="150" maxWidth="150"
-              style="-fx-background-color: #c0c0c0; -fx-border-color: #808080; -fx-border-width: 0 1 0 0;">
+        <VBox minWidth="160" maxWidth="160"
+              style="-fx-background-color: #181825; -fx-border-color: #313244; -fx-border-width: 0 1 0 0;">
             <Label text="SALAS"
-                   style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-padding: 8 8 4 8;"/>
-            <ListView fx:id="roomList" VBox.vgrow="ALWAYS"/>
+                   style="-fx-text-fill: #6c7086; -fx-font-size: 10px; -fx-font-weight: bold;
+                          -fx-padding: 14 12 6 12;"/>
+            <ListView fx:id="listaSalas" VBox.vgrow="ALWAYS"/>
         </VBox>
     </left>
 
-    <!-- Centro: mensagens + input -->
+    <!-- Área principal -->
     <center>
-        <VBox>
-            <ListView fx:id="messageList" VBox.vgrow="ALWAYS">
-                <padding><Insets top="4" right="8" bottom="0" left="8"/></padding>
+        <VBox style="-fx-background-color: #1e1e2e;">
+            <ListView fx:id="listaMensagens" VBox.vgrow="ALWAYS">
+                <padding><Insets top="8" right="12" bottom="4" left="12"/></padding>
             </ListView>
 
-            <HBox spacing="4" style="-fx-padding: 6 8 8 8;">
-                <TextField fx:id="messageField" HBox.hgrow="ALWAYS"
+            <Separator/>
+
+            <HBox spacing="8" style="-fx-padding: 10 12 12 12;">
+                <TextField fx:id="campoMensagem" HBox.hgrow="ALWAYS"
                            promptText="Mensagem..."
-                           onKeyPressed="#onKeyPressed"/>
-                <Button fx:id="sendButton" text="Enviar" onAction="#onSend"/>
+                           onKeyPressed="#aoPresionarTecla"/>
+                <Button fx:id="botaoEnviar" text="Enviar" onAction="#aoEnviar"
+                        styleClass="button,primary"/>
             </HBox>
         </VBox>
     </center>
