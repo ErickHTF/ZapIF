@@ -1,268 +1,268 @@
-@startuml class_diagram
-title Chat App — Class Diagram
+@startuml diagrama_classes
+title ZapIF — Diagrama de Classes
 
 skinparam classAttributeIconSize 0
 skinparam groupInheritance 2
 
 ' ─────────────────────────────────────────────────────────────────
-' PACKAGES
+' PACOTES
 ' ─────────────────────────────────────────────────────────────────
 
 package "client" {
 
-    class Main <<Application>> {
-        - {static} connection : Connection
-        + start(stage : Stage) : void
+    class Main <<Aplicação>> {
+        - {static} conexao : Conexao
+        + start(palco : Stage) : void
         + stop() : void
-        + {static} getConnection() : Connection
+        + {static} getConexao() : Conexao
         + {static} main(args : String[]) : void
     }
 
     package "model" {
-        class Message {
-            - {static} FMT : DateTimeFormatter
-            - sender : String
-            - text   : String
-            - time   : String
-            + Message(sender : String, text : String)
-            + getSender() : String
-            + getText()   : String
-            + toString()  : String
+        class Mensagem {
+            - {static} FORMATO : DateTimeFormatter
+            - remetente : String
+            - texto     : String
+            - hora      : String
+            + Mensagem(remetente : String, texto : String)
+            + getRemetente() : String
+            + getTexto()     : String
+            + toString()     : String
         }
 
-        class User {
-            - name : String
-            + User(name : String)
-            + getName() : String
+        class Usuario {
+            - nome : String
+            + Usuario(nome : String)
+            + getNome() : String
         }
     }
 
     package "network" {
-        interface MessageListener {
-            + onMessage(message : String) : void
+        interface OuvinteMensagem {
+            + aoReceberMensagem(mensagem : String) : void
         }
 
-        interface ConnectionStatusListener {
-            + onStatusChange(status : Connection.Status) : void
+        interface OuvinteStatusConexao {
+            + aoMudarStatus(status : Conexao.Status) : void
         }
 
-        class Connection {
-            + {static} HOST            : String
-            + {static} PORT            : int
-            + {static} RETRY_SECONDS   : int
-            + {static} READ_TIMEOUT_MS : int
-            - msgListeners    : List<MessageListener>
-            - statusListeners : List<ConnectionStatusListener>
-            - scheduler       : ScheduledExecutorService
-            - socket          : Socket
-            - out             : PrintWriter
-            - running         : boolean
-            + Connection()
-            + send(message : String) : void
-            + addMessageListener(l : MessageListener) : void
-            + removeMessageListener(l : MessageListener) : void
-            + addStatusListener(l : ConnectionStatusListener) : void
-            + removeStatusListener(l : ConnectionStatusListener) : void
-            + disconnect() : void
-            - connectAsync() : void
-            - connect() : void
-            - readLoop(in : BufferedReader) : void
-            - scheduleRetry() : void
-            - closeSocket() : void
-            - notifyStatus(status : Status) : void
+        class Conexao {
+            + {static} HOST               : String
+            + {static} PORTA              : int = 5001
+            + {static} SEGUNDOS_RETRY     : int
+            + {static} TIMEOUT_LEITURA_MS : int
+            - ouvintesMensagem : List<OuvinteMensagem>
+            - ouvintesStatus   : List<OuvinteStatusConexao>
+            - agendador        : ScheduledExecutorService
+            - socket           : Socket
+            - saida            : PrintWriter
+            - ativo            : boolean
+            + Conexao()
+            + enviar(mensagem : String) : void
+            + adicionarOuvinteMensagem(l : OuvinteMensagem) : void
+            + removerOuvinteMensagem(l : OuvinteMensagem) : void
+            + adicionarOuvinteStatus(l : OuvinteStatusConexao) : void
+            + removerOuvinteStatus(l : OuvinteStatusConexao) : void
+            + desconectar() : void
+            - conectarAsync() : void
+            - conectar() : void
+            - loopLeitura(entrada : BufferedReader) : void
+            - agendarRetry() : void
+            - fecharSocket() : void
+            - notificarStatus(status : Status) : void
         }
 
-        enum "Connection.Status" as Status {
-            CONNECTING
-            CONNECTED
-            DISCONNECTED
+        enum "Conexao.Status" as Status {
+            CONECTANDO
+            CONECTADO
+            DESCONECTADO
         }
 
-        Connection +-- Status
-        Connection o-- "0..*" MessageListener
-        Connection o-- "0..*" ConnectionStatusListener
+        Conexao +-- Status
+        Conexao o-- "0..*" OuvinteMensagem
+        Conexao o-- "0..*" OuvinteStatusConexao
     }
 
     package "ui" {
-        class LoginController {
-            - {static} TIMEOUT_SECONDS : int
-            - usernameField  : TextField
-            - passwordField  : PasswordField
-            - statusLabel    : Label
-            - loginButton    : Button
-            - registerButton : Button
-            - connection     : Connection
-            - scheduler      : ScheduledExecutorService
-            - pendingTimeout : ScheduledFuture<?>
+        class ControladorLogin {
+            - {static} SEGUNDOS_TIMEOUT : int
+            - campoUsuario    : TextField
+            - campoSenha      : PasswordField
+            - labelStatus     : Label
+            - botaoLogin      : Button
+            - botaoCadastro   : Button
+            - conexao         : Conexao
+            - agendador       : ScheduledExecutorService
+            - timeoutPendente : ScheduledFuture<?>
             + initialize() : void
-            + onLogin() : void
-            + onRegister() : void
-            + onMessage(message : String) : void
-            - openChat(username : String, rooms : String[]) : void
-            - {static} validate(name : String, pass : String) : String
-            - scheduleTimeout() : void
-            - cancelTimeout() : void
-            - setStatus(text : String, enable : boolean) : void
-            - setBusy(busy : boolean) : void
+            + aoFazerLogin() : void
+            + aoRegistrar() : void
+            + aoReceberMensagem(mensagem : String) : void
+            - abrirChat(nomeUsuario : String, salas : String[]) : void
+            - {static} validar(nome : String, senha : String) : String
+            - agendarTimeout() : void
+            - cancelarTimeout() : void
+            - definirStatus(texto : String, habilitar : boolean) : void
+            - definirOcupado(ocupado : boolean) : void
         }
 
-        class ChatController {
-            - roomList     : ListView<String>
-            - messageList  : ListView<String>
-            - messageField : TextField
-            - sendButton   : Button
-            - offlineBanner: HBox
-            - connection   : Connection
-            - username     : String
-            - currentRoom  : String
+        class ControladorChat {
+            - listaSalas     : ListView<String>
+            - listaMensagens : ListView<String>
+            - campoMensagem  : TextField
+            - botaoEnviar    : Button
+            - bannerOffline  : HBox
+            - conexao        : Conexao
+            - nomeUsuario    : String
+            - salaAtual      : String
             + initialize() : void
-            + setup(username : String, rooms : String[]) : void
-            - joinRoom(room : String) : void
-            + onSend() : void
-            + onKeyPressed(e : KeyEvent) : void
-            + onMessage(message : String) : void
-            - appendLine(line : String) : void
-            - scrollToBottom() : void
+            + configurar(nomeUsuario : String, salas : String[]) : void
+            - entrarNaSala(sala : String) : void
+            + aoEnviar() : void
+            + aoPresionarTecla(e : KeyEvent) : void
+            + aoReceberMensagem(mensagem : String) : void
+            - adicionarLinha(linha : String) : void
+            - rolarParaBaixo() : void
         }
     }
 }
 
 package "server" {
 
-    class Server {
-        + {static} PORT        : int
-        + {static} MAX_CLIENTS : int
+    class Servidor {
+        + {static} PORTA        : int = 5001
+        + {static} MAX_CLIENTES : int
         + {static} main(args : String[]) : void
     }
 
-    class ClientHandler <<Runnable>> {
-        + {static} MAX_USERNAME    : int
-        + {static} MIN_USERNAME    : int
-        + {static} MAX_TEXT        : int
-        + {static} READ_TIMEOUT_MS : int
-        + {static} PING_INTERVAL_S : int
-        - socket       : Socket
-        - out          : PrintWriter
-        - username     : String
-        - currentRoom  : Room
-        - pingScheduler: ScheduledExecutorService
-        - pingTask     : ScheduledFuture<?>
-        + ClientHandler(socket : Socket)
+    class ManipuladorCliente <<Runnable>> {
+        + {static} MAX_NOME_USUARIO  : int
+        + {static} MIN_NOME_USUARIO  : int
+        + {static} MAX_TEXTO         : int
+        + {static} TIMEOUT_LEITURA_MS: int
+        + {static} INTERVALO_PING_S  : int
+        - socket        : Socket
+        - saida         : PrintWriter
+        - nomeUsuario   : String
+        - salaAtual     : Sala
+        - agendadorPing : ScheduledExecutorService
+        - tarefaPing    : ScheduledFuture<?>
+        + ManipuladorCliente(socket : Socket)
         + run() : void
-        - handleMessage(raw : String) : void
-        - handleRegister(parts : String[]) : void
-        - handleLogin(parts : String[]) : void
-        - handleJoin(parts : String[]) : void
-        - handleMsg(parts : String[]) : void
-        + sendMessage(message : String) : void
-        - startHeartbeat() : void
-        - cleanup() : void
-        - {static} validateUsername(name : String) : String
-        - {static} sanitize(s : String, maxLen : int) : String
+        - processarMensagem(bruto : String) : void
+        - processarRegistro(partes : String[]) : void
+        - processarLogin(partes : String[]) : void
+        - processarEntradaSala(partes : String[]) : void
+        - processarMensagemChat(partes : String[]) : void
+        + enviarMensagem(mensagem : String) : void
+        - iniciarHeartbeat() : void
+        - limpar() : void
+        - {static} validarNomeUsuario(nome : String) : String
+        - {static} sanitizar(s : String, tamanhoMax : int) : String
     }
 
-    class Database {
-        - {static} DB_URL      : String
-        - {static} PBKDF2_ITER : int
-        - {static} SALT_BYTES  : int
-        - {static} HASH_BITS   : int
-        + {static} init() : void
-        + {static} register(nome : String, senha : String) : boolean
-        + {static} login(nome : String, senha : String) : boolean
-        + {static} roomExists(nome : String) : boolean
-        + {static} getRooms() : List<String>
-        + {static} getHistory(sala : String, limit : int) : List<String>
-        + {static} saveMessage(sala : String, usuario : String, texto : String) : void
-        - {static} connect() : Connection
-        - {static} generateSalt() : String
-        - {static} pbkdf2(password : String, saltB64 : String) : String
+    class BancoDados {
+        - {static} URL_BANCO   : String
+        - {static} ITER_PBKDF2 : int
+        - {static} BYTES_SALT  : int
+        - {static} BITS_HASH   : int
+        + {static} inicializar() : void
+        + {static} registrar(nome : String, senha : String) : boolean
+        + {static} autenticar(nome : String, senha : String) : boolean
+        + {static} salaExiste(nome : String) : boolean
+        + {static} obterSalas() : List<String>
+        + {static} obterHistorico(sala : String, limite : int) : List<String>
+        + {static} salvarMensagem(sala : String, usuario : String, texto : String) : void
+        - {static} conectar() : Connection
+        - {static} gerarSalt() : String
+        - {static} pbkdf2(senha : String, saltB64 : String) : String
     }
 
-    class Room {
-        - name    : String
-        - clients : CopyOnWriteArrayList<ClientHandler>
-        - {static} rooms : Map<String, Room>
-        - Room(name : String)
-        + {static} getOrCreate(name : String) : Room
-        + addClient(client : ClientHandler) : void
-        + removeClient(client : ClientHandler) : void
-        + broadcast(message : String, exclude : ClientHandler) : void
-        + getName() : String
+    class Sala {
+        - nome    : String
+        - clientes : CopyOnWriteArrayList<ManipuladorCliente>
+        - {static} salas : Map<String, Sala>
+        - Sala(nome : String)
+        + {static} obterOuCriar(nome : String) : Sala
+        + adicionarCliente(cliente : ManipuladorCliente) : void
+        + removerCliente(cliente : ManipuladorCliente) : void
+        + transmitir(mensagem : String, excluir : ManipuladorCliente) : void
+        + getNome() : String
     }
 
-    class SessionRegistry {
+    class RegistroSessao {
         - {static} online : Set<String>
-        + {static} tryRegister(username : String) : boolean
-        + {static} unregister(username : String) : void
+        + {static} tentarRegistrar(nomeUsuario : String) : boolean
+        + {static} desregistrar(nomeUsuario : String) : void
     }
 }
 
 ' ─────────────────────────────────────────────────────────────────
-' RELATIONSHIPS
+' RELACIONAMENTOS
 ' ─────────────────────────────────────────────────────────────────
 
 ' Interfaces
-LoginController  ..|> MessageListener
-ChatController   ..|> MessageListener
+ControladorLogin  ..|> OuvinteMensagem
+ControladorChat   ..|> OuvinteMensagem
 
-' Composition / dependencies — client
-Main             "1" *-- "1" Connection       : manages
-LoginController  "1" --> "1" Connection       : uses
-ChatController   "1" --> "1" Connection       : uses
-ChatController   ..>         Message          : creates
-LoginController  ..>         ChatController   : opens
+' Composição / dependências — cliente
+Main              "1" *-- "1" Conexao          : gerencia
+ControladorLogin  "1" --> "1" Conexao          : usa
+ControladorChat   "1" --> "1" Conexao          : usa
+ControladorChat   ..>         Mensagem         : cria
+ControladorLogin  ..>         ControladorChat  : abre
 
-' Composition / dependencies — server
-Server           "1" *-- "0..*" ClientHandler : spawns
-ClientHandler    "1" --> "1"    Room          : joins
-ClientHandler    ..>             Database      : calls
-ClientHandler    ..>             SessionRegistry : calls
-Room             "1" o-- "0..*" ClientHandler : contains
+' Composição / dependências — servidor
+Servidor          "1" *-- "0..*" ManipuladorCliente : cria
+ManipuladorCliente "1" --> "1"   Sala               : entra
+ManipuladorCliente ..>           BancoDados         : chama
+ManipuladorCliente ..>           RegistroSessao     : chama
+Sala              "1" o-- "0..*" ManipuladorCliente : contém
 
 @enduml
 
 ' ═══════════════════════════════════════════════════════════════════
 
-@startuml sequence_login
-title Login / Register Flow
+@startuml sequencia_login
+title Fluxo de Login / Cadastro
 
-actor       User
-participant LoginController
-participant Connection
-participant "Server\nClientHandler" as CH
-database    Database
+actor       Usuario
+participant ControladorLogin
+participant Conexao
+participant "Servidor\nManipuladorCliente" as MC
+database    BancoDados
 
-User -> LoginController : clicks Login / Register
+Usuario -> ControladorLogin : clica em Login / Cadastro
 
-LoginController -> LoginController : validate(username, password)
+ControladorLogin -> ControladorLogin : validar(nome, senha)
 
-alt invalid input
-    LoginController --> User : show error in statusLabel
-else valid input
-    LoginController -> Connection : send("LOGIN|user|pass")
-    LoginController -> LoginController : scheduleTimeout()
+alt entrada inválida
+    ControladorLogin --> Usuario : exibe erro no labelStatus
+else entrada válida
+    ControladorLogin -> Conexao : enviar("LOGIN|usuario|senha")
+    ControladorLogin -> ControladorLogin : agendarTimeout()
 
-    Connection -> CH : [TCP] "LOGIN|user|pass"
+    Conexao -> MC : [TCP] "LOGIN|usuario|senha"
 
-    CH -> Database : login(user, pass)
-    Database --> CH : true / false
+    MC -> BancoDados : autenticar(usuario, senha)
+    BancoDados --> MC : true / false
 
-    alt credentials OK
-        CH -> Database : getRooms()
-        Database --> CH : ["geral","off-topic","ajuda"]
-        CH -> Connection : "OK|LOGIN"
-        CH -> Connection : "ROOMS|geral,off-topic,ajuda"
+    alt credenciais OK
+        MC -> BancoDados : obterSalas()
+        BancoDados --> MC : ["geral","off-topic","ajuda"]
+        MC -> Conexao : "OK|LOGIN"
+        MC -> Conexao : "ROOMS|geral,off-topic,ajuda"
 
-        Connection -> LoginController : onMessage("OK|LOGIN")
-        Connection -> LoginController : onMessage("ROOMS|geral,off-topic,ajuda")
+        Conexao -> ControladorLogin : aoReceberMensagem("OK|LOGIN")
+        Conexao -> ControladorLogin : aoReceberMensagem("ROOMS|geral,off-topic,ajuda")
 
-        LoginController -> LoginController : cancelTimeout()
-        LoginController -> ChatController  : openChat(username, rooms)
-    else credentials FAIL
-        CH -> Connection : "ERROR|Invalid credentials"
-        Connection -> LoginController : onMessage("ERROR|Invalid credentials")
-        LoginController -> LoginController : cancelTimeout()
-        LoginController --> User : show error message
+        ControladorLogin -> ControladorLogin : cancelarTimeout()
+        ControladorLogin -> ControladorChat  : abrirChat(nomeUsuario, salas)
+    else credenciais INVÁLIDAS
+        MC -> Conexao : "ERROR|Usuário ou senha inválidos"
+        Conexao -> ControladorLogin : aoReceberMensagem("ERROR|Usuário ou senha inválidos")
+        ControladorLogin -> ControladorLogin : cancelarTimeout()
+        ControladorLogin --> Usuario : exibe mensagem de erro
     end
 end
 
@@ -270,55 +270,188 @@ end
 
 ' ═══════════════════════════════════════════════════════════════════
 
-@startuml sequence_chat
-title Send & Receive Message Flow
+@startuml sequencia_chat
+title Fluxo de Envio e Recebimento de Mensagem
 
 actor       Alice
-participant ChatController as CC
-participant Connection     as CONN
-participant "Server\nClientHandler" as CH
-participant Room
+participant ControladorChat as CC
+participant Conexao          as CONN
+participant "Servidor\nManipuladorCliente" as MC
+participant Sala
 actor       Bob
 
-Alice -> CC   : types message + presses Enter
-CC    -> CONN : send("MSG|geral|Alice|hello world")
+Alice -> CC   : digita mensagem + pressiona Enter
+CC    -> CONN : enviar("MSG|geral|Alice|olá mundo")
 
-CONN  -> CH   : [TCP] "MSG|geral|Alice|hello world"
-CH    -> CH   : validateUsername / sanitize
-CH    -> Room : broadcast("MSG|geral|Alice|hello world", exclude=null)
+CONN  -> MC   : [TCP] "MSG|geral|Alice|olá mundo"
+MC    -> MC   : validarNomeUsuario / sanitizar
+MC    -> Sala : transmitir("MSG|geral|Alice|olá mundo", excluir=null)
 
-Room  -> CH   : sendMessage(msg) → Alice's socket
-Room  -> CH   : sendMessage(msg) → Bob's socket
+Sala  -> MC   : enviarMensagem(msg) → socket de Alice
+Sala  -> MC   : enviarMensagem(msg) → socket de Bob
 
-CONN  -> CC   : onMessage("MSG|geral|Alice|hello world")
-CC    -> CC   : appendLine("[HH:mm] Alice: hello world")
-CC    -> CC   : scrollToBottom()
+CONN  -> CC   : aoReceberMensagem("MSG|geral|Alice|olá mundo")
+CC    -> CC   : adicionarLinha("[HH:mm] Alice: olá mundo")
+CC    -> CC   : rolarParaBaixo()
 
-CONN  -> "Bob\nChatController" as BCC : onMessage("MSG|geral|Alice|hello world")
-BCC   -> BCC  : appendLine("[HH:mm] Alice: hello world")
-BCC   -> Bob  : message appears in ListView
+CONN  -> "ControladorChat\nde Bob" as CCB : aoReceberMensagem("MSG|geral|Alice|olá mundo")
+CCB   -> CCB  : adicionarLinha("[HH:mm] Alice: olá mundo")
+CCB   -> Bob  : mensagem aparece na ListView
 
 @enduml
 
 ' ═══════════════════════════════════════════════════════════════════
 
-@startuml sequence_heartbeat
-title Heartbeat (PING/PONG) Flow
+@startuml sequencia_heartbeat
+title Fluxo de Heartbeat (PING/PONG)
 
-participant "Server\nClientHandler" as CH
-participant Connection
+participant "Servidor\nManipuladorCliente" as MC
+participant Conexao
 
-CH    -> CH   : startHeartbeat() — every 20 s
-CH    -> CONN : "PING"
-CONN  -> CONN : readLoop detects "PING"
-CONN  -> CH   : "PONG"
+MC    -> MC   : iniciarHeartbeat() — a cada 20 s
+MC    -> CONN : "PING"
+CONN  -> CONN : loopLeitura detecta "PING"
+CONN  -> MC   : "PONG"
 
-note over CH : resets socket read timeout (60 s)
+note over MC : reseta o timeout de leitura do socket (45 s)
 
-alt no PONG within timeout
-    CH -> CH : socket read times out → SocketTimeoutException
-    CH -> CH : cleanup() → SessionRegistry.unregister()
-    CONN -> CONN : scheduleRetry() after 5 s
+alt sem PONG dentro do timeout
+    MC -> MC : leitura do socket expira → SocketTimeoutException
+    MC -> MC : limpar() → RegistroSessao.desregistrar()
+    CONN -> CONN : agendarRetry() após 5 s
 end
+
+@enduml
+
+' ═══════════════════════════════════════════════════════════════════
+
+@startuml caso_de_uso
+title ZapIF — Diagrama de Caso de Uso
+
+left to right direction
+skinparam actorStyle awesome
+
+actor "Usuário\nNão Autenticado" as Anonimo
+actor "Usuário\nAutenticado"     as Autenticado
+actor "Servidor"                 as Servidor <<system>>
+
+rectangle "ZapIF — Sistema de Chat" {
+
+    usecase "UC01\nCadastrar conta"       as UC01
+    usecase "UC02\nFazer login"           as UC02
+    usecase "UC03\nVisualizar salas"      as UC03
+    usecase "UC04\nEntrar em sala"        as UC04
+    usecase "UC05\nEnviar mensagem"       as UC05
+    usecase "UC06\nReceber mensagem\nem tempo real" as UC06
+    usecase "UC07\nVisualizar histórico\nda sala"   as UC07
+    usecase "UC08\nTrocar de sala"        as UC08
+    usecase "UC09\nDesconectar"           as UC09
+
+    usecase "UC10\nValidar credenciais"   as UC10
+    usecase "UC11\nPersistir mensagem"    as UC11
+    usecase "UC12\nTransmitir mensagem\n(broadcast)" as UC12
+    usecase "UC13\nHeartbeat PING/PONG"  as UC13
+    usecase "UC14\nReconectar\nautomaticamente" as UC14
+}
+
+' Ator não autenticado
+Anonimo --> UC01
+Anonimo --> UC02
+
+' Ator autenticado (herda do não autenticado após login)
+Autenticado --> UC03
+Autenticado --> UC04
+Autenticado --> UC05
+Autenticado --> UC06
+Autenticado --> UC07
+Autenticado --> UC08
+Autenticado --> UC09
+Autenticado --> UC14
+
+' Servidor (casos internos/sistema)
+Servidor --> UC10
+Servidor --> UC11
+Servidor --> UC12
+Servidor --> UC13
+
+' Inclusões
+UC02 ..> UC10 : <<include>>
+UC05 ..> UC11 : <<include>>
+UC05 ..> UC12 : <<include>>
+UC04 ..> UC07 : <<include>>
+
+' Extensões
+UC09 ..> UC14 : <<extend>>\nse queda de rede
+
+@enduml
+
+' ═══════════════════════════════════════════════════════════════════
+
+@startuml diagrama_pacotes
+title ZapIF — Diagrama de Pacotes e Arquitetura
+
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+package "Máquina do Usuário" {
+
+    package "client" <<Application>> {
+
+        package "client.ui" {
+            [ControladorLogin]
+            [ControladorChat]
+        }
+
+        package "client.network" {
+            [Conexao]
+            [OuvinteMensagem]
+            [OuvinteStatusConexao]
+        }
+
+        package "client.model" {
+            [Mensagem]
+            [Usuario]
+        }
+
+        [Main]
+    }
+}
+
+package "Servidor (processo único)" {
+
+    package "server" <<Application>> {
+        [Servidor]
+        [ManipuladorCliente]
+        [Sala]
+        [RegistroSessao]
+        [BancoDados]
+    }
+
+    database "SQLite\nchat.db" as DB {
+        [usuarios]
+        [salas]
+        [mensagens]
+    }
+}
+
+' Dependências internas — cliente
+[Main]              --> [Conexao]           : cria
+[ControladorLogin]  --> [Conexao]           : usa
+[ControladorChat]   --> [Conexao]           : usa
+[ControladorLogin]  ..> [ControladorChat]   : abre
+[ControladorChat]   ..> [Mensagem]          : instancia
+[Conexao]           ..> [OuvinteMensagem]   : notifica
+[Conexao]           ..> [OuvinteStatusConexao] : notifica
+
+' Dependências internas — servidor
+[Servidor]          --> [ManipuladorCliente] : submete ao pool
+[ManipuladorCliente] --> [Sala]              : entra/sai
+[ManipuladorCliente] --> [BancoDados]        : persiste/consulta
+[ManipuladorCliente] --> [RegistroSessao]    : registra/libera
+[Sala]              --> [ManipuladorCliente] : broadcast
+[BancoDados]        --> DB                  : JDBC/SQLite
+
+' Comunicação entre camadas
+[Conexao] <--> [ManipuladorCliente] : TCP Socket\n(porta 5001)\nprotocolo texto "|"
 
 @enduml

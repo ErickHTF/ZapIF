@@ -12,14 +12,14 @@ import java.util.List;
  * Acesso ao banco SQLite. Cada método abre e fecha a própria conexão.
  * Senhas armazenadas com PBKDF2-HMAC-SHA256 + salt por usuário.
  */
-public class Database {
-    private static final String DB_URL      = "jdbc:sqlite:chat.db";
-    private static final int    PBKDF2_ITER = 100_000; // mínimo recomendado pelo OWASP
-    private static final int    SALT_BYTES  = 16;
-    private static final int    HASH_BITS   = 256;
+public class BancoDados {
+    private static final String URL_BANCO    = "jdbc:sqlite:chat.db";
+    private static final int    ITER_PBKDF2  = 100_000; // mínimo recomendado pelo OWASP
+    private static final int    BYTES_SALT   = 16;
+    private static final int    BITS_HASH    = 256;
 
-    public static void init() {
-        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
+    public static void inicializar() {
+        try (Connection conn = conectar(); Statement stmt = conn.createStatement()) {
             stmt.execute("""
                 CREATE TABLE IF NOT EXISTS usuarios (
                     id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,8 +45,8 @@ public class Database {
             """);
             try (PreparedStatement ps = conn.prepareStatement(
                     "INSERT OR IGNORE INTO salas (nome) VALUES (?)")) {
-                for (String r : new String[]{"geral", "off-topic", "ajuda"}) {
-                    ps.setString(1, r);
+                for (String s : new String[]{"geral", "off-topic", "ajuda"}) {
+                    ps.setString(1, s);
                     ps.executeUpdate();
                 }
             }
@@ -57,10 +57,10 @@ public class Database {
     }
 
     /** @return true se criado, false se nome já existe (UNIQUE constraint) */
-    public static boolean register(String nome, String senha) {
-        String salt = generateSalt();
+    public static boolean registrar(String nome, String senha) {
+        String salt = gerarSalt();
         String hash = pbkdf2(senha, salt);
-        try (Connection conn = connect();
+        try (Connection conn = conectar();
              PreparedStatement ps = conn.prepareStatement(
                  "INSERT INTO usuarios (nome, senha_hash, salt) VALUES (?, ?, ?)")) {
             ps.setString(1, nome);
@@ -73,8 +73,8 @@ public class Database {
         }
     }
 
-    public static boolean login(String nome, String senha) {
-        try (Connection conn = connect();
+    public static boolean autenticar(String nome, String senha) {
+        try (Connection conn = conectar();
              PreparedStatement ps = conn.prepareStatement(
                  "SELECT senha_hash, salt FROM usuarios WHERE nome = ?")) {
             ps.setString(1, nome);
@@ -89,8 +89,8 @@ public class Database {
     }
 
     /** Usado para validar JOINs — impede criação de salas fantasma em memória. */
-    public static boolean roomExists(String nome) {
-        try (Connection conn = connect();
+    public static boolean salaExiste(String nome) {
+        try (Connection conn = conectar();
              PreparedStatement ps = conn.prepareStatement(
                  "SELECT 1 FROM salas WHERE nome = ?")) {
             ps.setString(1, nome);
@@ -103,23 +103,23 @@ public class Database {
         }
     }
 
-    public static List<String> getRooms() {
-        List<String> list = new ArrayList<>();
-        try (Connection conn = connect();
+    public static List<String> obterSalas() {
+        List<String> lista = new ArrayList<>();
+        try (Connection conn = conectar();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery("SELECT nome FROM salas ORDER BY nome")) {
-            while (rs.next()) list.add(rs.getString("nome"));
+            while (rs.next()) lista.add(rs.getString("nome"));
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return list;
+        return lista;
     }
 
     /**
      * Retorna as N mensagens mais recentes em ordem cronológica.
      * A subquery pega as últimas em DESC; a query externa reordena em ASC para exibição.
      */
-    public static List<String> getHistory(String sala, int limit) {
+    public static List<String> obterHistorico(String sala, int limite) {
         List<String> msgs = new ArrayList<>();
         String sql = """
             SELECT usuario, texto FROM (
@@ -127,10 +127,10 @@ public class Database {
                 WHERE sala_nome = ? ORDER BY id DESC LIMIT ?
             ) ORDER BY id ASC
         """;
-        try (Connection conn = connect();
+        try (Connection conn = conectar();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, sala);
-            ps.setInt(2, limit);
+            ps.setInt(2, limite);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     msgs.add(rs.getString("usuario") + ": " + rs.getString("texto"));
@@ -143,8 +143,8 @@ public class Database {
     }
 
     /** Chamado antes do broadcast para garantir que a mensagem está persistida. */
-    public static void saveMessage(String sala, String usuario, String texto) {
-        try (Connection conn = connect();
+    public static void salvarMensagem(String sala, String usuario, String texto) {
+        try (Connection conn = conectar();
              PreparedStatement ps = conn.prepareStatement(
                  "INSERT INTO mensagens (sala_nome, usuario, texto) VALUES (?, ?, ?)")) {
             ps.setString(1, sala);
@@ -156,23 +156,23 @@ public class Database {
         }
     }
 
-    // -- internals -------------------------------------------------------------
+    // -- internos -------------------------------------------------------------
 
-    private static Connection connect() throws SQLException {
-        return DriverManager.getConnection(DB_URL);
+    private static Connection conectar() throws SQLException {
+        return DriverManager.getConnection(URL_BANCO);
     }
 
-    private static String generateSalt() {
-        byte[] salt = new byte[SALT_BYTES];
+    private static String gerarSalt() {
+        byte[] salt = new byte[BYTES_SALT];
         new SecureRandom().nextBytes(salt);
         return Base64.getEncoder().encodeToString(salt);
     }
 
-    private static String pbkdf2(String password, String saltB64) {
+    private static String pbkdf2(String senha, String saltB64) {
         try {
             byte[] salt = Base64.getDecoder().decode(saltB64);
             PBEKeySpec spec = new PBEKeySpec(
-                password.toCharArray(), salt, PBKDF2_ITER, HASH_BITS);
+                senha.toCharArray(), salt, ITER_PBKDF2, BITS_HASH);
             SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             byte[] hash = skf.generateSecret(spec).getEncoded();
             spec.clearPassword(); // limpa a senha da memória o quanto antes
