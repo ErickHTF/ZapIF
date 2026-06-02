@@ -89,9 +89,9 @@ skinparam ArrowColor #475569
 skinparam NoteBackgroundColor #FEFCE8
 skinparam NoteBorderColor #CA8A04
 
-actor       "Alice"              as A
-participant "ControladorChat\n(Alice)" as CCA
-participant "Conexao\n(Alice)"   as CNA
+actor       "Pedro"              as A
+participant "ControladorChat\n(Pedro)" as CCA
+participant "Conexao\n(Pedro)"   as CNA
 participant "ManipuladorCliente" as MC
 participant "Sala"               as S
 participant "Conexao\n(Bob)"     as CNB
@@ -99,24 +99,24 @@ participant "ControladorChat\n(Bob)" as CCB
 actor       "Bob"                as B
 
 A   -> CCA : digita texto + Enter
-CCA -> CNA : enviar("MSG|geral|Alice|olá mundo")
-CNA -> MC  : [TCP] "MSG|geral|Alice|olá mundo"
+CCA -> CNA : enviar("MSG|geral|Pedro|olá mundo")
+CNA -> MC  : [TCP] "MSG|geral|Pedro|olá mundo"
 
 MC  -> MC  : sanitizar(texto)
 MC  -> MC  : BancoDados.salvarMensagem()
 note right of MC : persiste antes\ndo broadcast
 
-MC  -> S   : transmitir("MSG|geral|Alice|olá mundo", excluir=null)
+MC  -> S   : transmitir("MSG|geral|Pedro|olá mundo", excluir=null)
 
 S   -> CNA : enviarMensagem(msg)
 S   -> CNB : enviarMensagem(msg)
 
 CNA -> CCA : aoReceberMensagem(msg)
-CCA -> CCA : adicionarLinha("[HH:mm] Alice: olá mundo")
+CCA -> CCA : adicionarLinha("[HH:mm] Pedro: olá mundo")
 CCA -> CCA : rolarParaBaixo()
 
 CNB -> CCB : aoReceberMensagem(msg)
-CCB -> CCB : adicionarLinha("[HH:mm] Alice: olá mundo")
+CCB -> CCB : adicionarLinha("[HH:mm] Pedro: olá mundo")
 CCB -> B   : mensagem aparece na ListView
 @enduml
 
