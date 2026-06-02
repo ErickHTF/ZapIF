@@ -33,7 +33,6 @@ public class ControladorChat implements OuvinteMensagem {
         conexao.adicionarOuvinteStatus(status -> {
             boolean offline = status == Conexao.Status.DESCONECTADO;
             Platform.runLater(() -> {
-                // setManaged junto com setVisible evita que o banner reserve espaço no layout
                 bannerOffline.setVisible(offline);
                 bannerOffline.setManaged(offline);
                 botaoEnviar.setDisable(offline);
@@ -41,13 +40,11 @@ public class ControladorChat implements OuvinteMensagem {
             });
         });
 
-        // Evita o JOIN duplicado se o usuário clicar numa sala já ativa
         listaSalas.getSelectionModel().selectedItemProperty().addListener((obs, antiga, sala) -> {
             if (sala != null && !sala.equals(salaAtual)) entrarNaSala(sala);
         });
     }
 
-    /** Chamado pelo ControladorLogin antes de exibir a cena */
     public void configurar(String nomeUsuario, String[] salas) {
         this.nomeUsuario = nomeUsuario;
         Platform.runLater(() -> {
@@ -64,15 +61,12 @@ public class ControladorChat implements OuvinteMensagem {
 
     @FXML
     private void aoEnviar() {
-        // '|' quebraria o protocolo, remove aqui e o servidor remove por segurança
         String bruto = campoMensagem.getText().replace("|", "").trim();
         String texto = bruto.length() > 500 ? bruto.substring(0, 500) : bruto;
 
         if (texto.isEmpty() || salaAtual == null) return;
         conexao.enviar("MSG|" + salaAtual + "|" + nomeUsuario + "|" + texto);
         campoMensagem.clear();
-        // A mensagem aparece quando o servidor faz broadcast de volta (exclude=null),
-        // garantindo que o que o usuário vê é o que foi persistido
     }
 
     @FXML
@@ -82,17 +76,14 @@ public class ControladorChat implements OuvinteMensagem {
 
     @Override
     public void aoReceberMensagem(String mensagem) {
-        // split -1 preserva partes vazias no final — necessário para histórico correto
         String[] partes = mensagem.split("\\|", -1);
         switch (partes[0]) {
             case "MSG" -> {
-                // Descarta mensagens de outras salas que chegam em trânsito durante troca de sala
                 if (partes.length >= 4 && partes[1].equals(salaAtual)) {
                     adicionarLinha(new Mensagem(partes[2], partes[3]).toString());
                 }
             }
             case "HISTORY" -> {
-                // Guard com salaAtual: descarta histórico de sala anterior que chega com atraso
                 if (partes.length >= 2 && partes[1].equals(salaAtual)) {
                     Platform.runLater(() -> {
                         listaMensagens.getItems().clear();

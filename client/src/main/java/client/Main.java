@@ -9,14 +9,10 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 
-    // Estático para que os controladores possam acessar a conexão via Main.getConexao()
-    // Existe uma única Conexao durante todo o ciclo de vida do app.
     private static Conexao conexao;
 
     @Override
     public void start(Stage palco) throws Exception {
-        // Abre a conexão antes de carregar o FXML: quando ControladorLogin.initialize() rodar,
-        // a Conexao já existe e pode receber ouvintes imediatamente.
         conexao = new Conexao();
 
         var iconStream = getClass().getResourceAsStream("/client/icon.png");
@@ -31,8 +27,6 @@ public class Main extends Application {
 
     @Override
     public void stop() {
-        // stop() é chamado pelo JavaFX ao fechar a janela principal.
-        // Encerra a Conexao para interromper o loopLeitura e liberar o socket.
         if (conexao != null) conexao.desconectar();
     }
 

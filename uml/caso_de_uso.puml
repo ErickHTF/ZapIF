@@ -1,0 +1,77 @@
+@startuml caso_de_uso
+title ZapIF — Diagrama de Caso de Uso
+
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #EEF2FF
+    BorderColor     #4F46E5
+    FontSize        13
+}
+skinparam actor {
+    BackgroundColor #F0FDF4
+    BorderColor     #16A34A
+    FontSize        13
+}
+skinparam rectangle {
+    BackgroundColor #FAFAFA
+    BorderColor     #94A3B8
+}
+skinparam ArrowColor #475569
+skinparam Shadowing false
+
+' ── Atores ────────────────────────────────────────────────────────
+actor "Usuário\nNão Autenticado" as Anonimo
+actor "Usuário\nAutenticado"     as Autenticado
+
+' ── Sistema ───────────────────────────────────────────────────────
+rectangle "ZapIF" {
+
+    ' Pré-login
+    usecase "Cadastrar conta" as UC01
+    usecase "Fazer login"     as UC02
+
+    ' Pós-login — navegação
+    usecase "Visualizar salas disponíveis" as UC03
+    usecase "Entrar em sala"               as UC04
+    usecase "Trocar de sala"               as UC08
+
+    ' Pós-login — mensagens
+    usecase "Enviar mensagem"                as UC05
+    usecase "Receber mensagem em tempo real" as UC06
+    usecase "Visualizar histórico da sala"   as UC07
+
+    ' Conexão
+    usecase "Desconectar"              as UC09
+    usecase "Reconectar automaticamente" as UC14
+
+    ' Comportamentos internos do servidor (include/extend)
+    usecase "Validar credenciais\n(PBKDF2)"         as UC10
+    usecase "Persistir mensagem\n(SQLite)"           as UC11
+    usecase "Transmitir mensagem\n(broadcast)"       as UC12
+    usecase "Detectar inatividade\n(PING / PONG)"    as UC13
+}
+
+' ── Associações do Usuário Não Autenticado ────────────────────────
+Anonimo --> UC01
+Anonimo --> UC02
+
+' ── Associações do Usuário Autenticado ───────────────────────────
+Autenticado --> UC03
+Autenticado --> UC04
+Autenticado --> UC05
+Autenticado --> UC06
+Autenticado --> UC07
+Autenticado --> UC08
+Autenticado --> UC09
+
+' ── Include (comportamento obrigatório) ──────────────────────────
+UC02 ..> UC10 : <<include>>
+UC05 ..> UC11 : <<include>>
+UC05 ..> UC12 : <<include>>
+UC04 ..> UC07 : <<include>>
+
+' ── Extend (comportamento condicional) ───────────────────────────
+UC09 ..> UC14 : <<extend>>\nqueda de rede
+UC13 ..> UC09 : <<extend>>\ntimeout sem PONG
+
+@enduml
