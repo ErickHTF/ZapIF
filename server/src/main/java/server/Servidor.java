@@ -16,7 +16,6 @@ public class Servidor {
 
         ExecutorService pool = Executors.newFixedThreadPool(MAX_CLIENTES);
 
-        // Chamado pelo SO no Ctrl+C / SIGTERM — dá tempo aos manipuladores de rodar limpar()
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("Encerrando servidor...");
             pool.shutdown();

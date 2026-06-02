@@ -8,15 +8,11 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-/**
- * Acesso ao banco SQLite. Cada método abre e fecha a própria conexão.
- * Senhas armazenadas com PBKDF2-HMAC-SHA256 + salt por usuário.
- */
 public class BancoDados {
-    private static final String URL_BANCO    = "jdbc:sqlite:chat.db";
-    private static final int    ITER_PBKDF2  = 100_000; // mínimo recomendado pelo OWASP
-    private static final int    BYTES_SALT   = 16;
-    private static final int    BITS_HASH    = 256;
+    private static final String URL_BANCO   = "jdbc:sqlite:chat.db";
+    private static final int    ITER_PBKDF2 = 100_000;
+    private static final int    BYTES_SALT  = 16;
+    private static final int    BITS_HASH   = 256;
 
     public static void inicializar() {
         try (Connection conn = conectar(); Statement stmt = conn.createStatement()) {
@@ -56,7 +52,6 @@ public class BancoDados {
         }
     }
 
-    /** @return true se criado, false se nome já existe (UNIQUE constraint) */
     public static boolean registrar(String nome, String senha) {
         String salt = gerarSalt();
         String hash = pbkdf2(senha, salt);
@@ -88,7 +83,6 @@ public class BancoDados {
         }
     }
 
-    /** Usado para validar JOINs — impede criação de salas fantasma em memória. */
     public static boolean salaExiste(String nome) {
         try (Connection conn = conectar();
              PreparedStatement ps = conn.prepareStatement(
@@ -115,10 +109,6 @@ public class BancoDados {
         return lista;
     }
 
-    /**
-     * Retorna as N mensagens mais recentes em ordem cronológica.
-     * A subquery pega as últimas em DESC; a query externa reordena em ASC para exibição.
-     */
     public static List<String> obterHistorico(String sala, int limite) {
         List<String> msgs = new ArrayList<>();
         String sql = """
@@ -142,7 +132,6 @@ public class BancoDados {
         return msgs;
     }
 
-    /** Chamado antes do broadcast para garantir que a mensagem está persistida. */
     public static void salvarMensagem(String sala, String usuario, String texto) {
         try (Connection conn = conectar();
              PreparedStatement ps = conn.prepareStatement(
@@ -155,8 +144,6 @@ public class BancoDados {
             e.printStackTrace();
         }
     }
-
-    // -- internos -------------------------------------------------------------
 
     private static Connection conectar() throws SQLException {
         return DriverManager.getConnection(URL_BANCO);
@@ -175,7 +162,7 @@ public class BancoDados {
                 senha.toCharArray(), salt, ITER_PBKDF2, BITS_HASH);
             SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
             byte[] hash = skf.generateSecret(spec).getEncoded();
-            spec.clearPassword(); // limpa a senha da memória o quanto antes
+            spec.clearPassword();
             return Base64.getEncoder().encodeToString(hash);
         } catch (Exception e) {
             throw new RuntimeException("Erro no hash de senha", e);

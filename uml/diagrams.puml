@@ -1,457 +1,155 @@
-@startuml diagrama_classes
-title ZapIF — Diagrama de Classes
-
-skinparam classAttributeIconSize 0
-skinparam groupInheritance 2
-
-' ─────────────────────────────────────────────────────────────────
-' PACOTES
-' ─────────────────────────────────────────────────────────────────
-
-package "client" {
-
-    class Main <<Aplicação>> {
-        - {static} conexao : Conexao
-        + start(palco : Stage) : void
-        + stop() : void
-        + {static} getConexao() : Conexao
-        + {static} main(args : String[]) : void
-    }
-
-    package "model" {
-        class Mensagem {
-            - {static} FORMATO : DateTimeFormatter
-            - remetente : String
-            - texto     : String
-            - hora      : String
-            + Mensagem(remetente : String, texto : String)
-            + getRemetente() : String
-            + getTexto()     : String
-            + toString()     : String
-        }
-
-        class Usuario {
-            - nome : String
-            + Usuario(nome : String)
-            + getNome() : String
-        }
-    }
-
-    package "network" {
-        interface OuvinteMensagem {
-            + aoReceberMensagem(mensagem : String) : void
-        }
-
-        interface OuvinteStatusConexao {
-            + aoMudarStatus(status : Conexao.Status) : void
-        }
-
-        class Conexao {
-            + {static} HOST               : String
-            + {static} PORTA              : int = 5001
-            + {static} SEGUNDOS_RETRY     : int
-            + {static} TIMEOUT_LEITURA_MS : int
-            - ouvintesMensagem : List<OuvinteMensagem>
-            - ouvintesStatus   : List<OuvinteStatusConexao>
-            - agendador        : ScheduledExecutorService
-            - socket           : Socket
-            - saida            : PrintWriter
-            - ativo            : boolean
-            + Conexao()
-            + enviar(mensagem : String) : void
-            + adicionarOuvinteMensagem(l : OuvinteMensagem) : void
-            + removerOuvinteMensagem(l : OuvinteMensagem) : void
-            + adicionarOuvinteStatus(l : OuvinteStatusConexao) : void
-            + removerOuvinteStatus(l : OuvinteStatusConexao) : void
-            + desconectar() : void
-            - conectarAsync() : void
-            - conectar() : void
-            - loopLeitura(entrada : BufferedReader) : void
-            - agendarRetry() : void
-            - fecharSocket() : void
-            - notificarStatus(status : Status) : void
-        }
-
-        enum "Conexao.Status" as Status {
-            CONECTANDO
-            CONECTADO
-            DESCONECTADO
-        }
-
-        Conexao +-- Status
-        Conexao o-- "0..*" OuvinteMensagem
-        Conexao o-- "0..*" OuvinteStatusConexao
-    }
-
-    package "ui" {
-        class ControladorLogin {
-            - {static} SEGUNDOS_TIMEOUT : int
-            - campoUsuario    : TextField
-            - campoSenha      : PasswordField
-            - labelStatus     : Label
-            - botaoLogin      : Button
-            - botaoCadastro   : Button
-            - conexao         : Conexao
-            - agendador       : ScheduledExecutorService
-            - timeoutPendente : ScheduledFuture<?>
-            + initialize() : void
-            + aoFazerLogin() : void
-            + aoRegistrar() : void
-            + aoReceberMensagem(mensagem : String) : void
-            - abrirChat(nomeUsuario : String, salas : String[]) : void
-            - {static} validar(nome : String, senha : String) : String
-            - agendarTimeout() : void
-            - cancelarTimeout() : void
-            - definirStatus(texto : String, habilitar : boolean) : void
-            - definirOcupado(ocupado : boolean) : void
-        }
-
-        class ControladorChat {
-            - listaSalas     : ListView<String>
-            - listaMensagens : ListView<String>
-            - campoMensagem  : TextField
-            - botaoEnviar    : Button
-            - bannerOffline  : HBox
-            - conexao        : Conexao
-            - nomeUsuario    : String
-            - salaAtual      : String
-            + initialize() : void
-            + configurar(nomeUsuario : String, salas : String[]) : void
-            - entrarNaSala(sala : String) : void
-            + aoEnviar() : void
-            + aoPresionarTecla(e : KeyEvent) : void
-            + aoReceberMensagem(mensagem : String) : void
-            - adicionarLinha(linha : String) : void
-            - rolarParaBaixo() : void
-        }
-    }
-}
-
-package "server" {
-
-    class Servidor {
-        + {static} PORTA        : int = 5001
-        + {static} MAX_CLIENTES : int
-        + {static} main(args : String[]) : void
-    }
-
-    class ManipuladorCliente <<Runnable>> {
-        + {static} MAX_NOME_USUARIO  : int
-        + {static} MIN_NOME_USUARIO  : int
-        + {static} MAX_TEXTO         : int
-        + {static} TIMEOUT_LEITURA_MS: int
-        + {static} INTERVALO_PING_S  : int
-        - socket        : Socket
-        - saida         : PrintWriter
-        - nomeUsuario   : String
-        - salaAtual     : Sala
-        - agendadorPing : ScheduledExecutorService
-        - tarefaPing    : ScheduledFuture<?>
-        + ManipuladorCliente(socket : Socket)
-        + run() : void
-        - processarMensagem(bruto : String) : void
-        - processarRegistro(partes : String[]) : void
-        - processarLogin(partes : String[]) : void
-        - processarEntradaSala(partes : String[]) : void
-        - processarMensagemChat(partes : String[]) : void
-        + enviarMensagem(mensagem : String) : void
-        - iniciarHeartbeat() : void
-        - limpar() : void
-        - {static} validarNomeUsuario(nome : String) : String
-        - {static} sanitizar(s : String, tamanhoMax : int) : String
-    }
-
-    class BancoDados {
-        - {static} URL_BANCO   : String
-        - {static} ITER_PBKDF2 : int
-        - {static} BYTES_SALT  : int
-        - {static} BITS_HASH   : int
-        + {static} inicializar() : void
-        + {static} registrar(nome : String, senha : String) : boolean
-        + {static} autenticar(nome : String, senha : String) : boolean
-        + {static} salaExiste(nome : String) : boolean
-        + {static} obterSalas() : List<String>
-        + {static} obterHistorico(sala : String, limite : int) : List<String>
-        + {static} salvarMensagem(sala : String, usuario : String, texto : String) : void
-        - {static} conectar() : Connection
-        - {static} gerarSalt() : String
-        - {static} pbkdf2(senha : String, saltB64 : String) : String
-    }
-
-    class Sala {
-        - nome    : String
-        - clientes : CopyOnWriteArrayList<ManipuladorCliente>
-        - {static} salas : Map<String, Sala>
-        - Sala(nome : String)
-        + {static} obterOuCriar(nome : String) : Sala
-        + adicionarCliente(cliente : ManipuladorCliente) : void
-        + removerCliente(cliente : ManipuladorCliente) : void
-        + transmitir(mensagem : String, excluir : ManipuladorCliente) : void
-        + getNome() : String
-    }
-
-    class RegistroSessao {
-        - {static} online : Set<String>
-        + {static} tentarRegistrar(nomeUsuario : String) : boolean
-        + {static} desregistrar(nomeUsuario : String) : void
-    }
-}
-
-' ─────────────────────────────────────────────────────────────────
-' RELACIONAMENTOS
-' ─────────────────────────────────────────────────────────────────
-
-' Interfaces
-ControladorLogin  ..|> OuvinteMensagem
-ControladorChat   ..|> OuvinteMensagem
-
-' Composição / dependências — cliente
-Main              "1" *-- "1" Conexao          : gerencia
-ControladorLogin  "1" --> "1" Conexao          : usa
-ControladorChat   "1" --> "1" Conexao          : usa
-ControladorChat   ..>         Mensagem         : cria
-ControladorLogin  ..>         ControladorChat  : abre
-
-' Composição / dependências — servidor
-Servidor          "1" *-- "0..*" ManipuladorCliente : cria
-ManipuladorCliente "1" --> "1"   Sala               : entra
-ManipuladorCliente ..>           BancoDados         : chama
-ManipuladorCliente ..>           RegistroSessao     : chama
-Sala              "1" o-- "0..*" ManipuladorCliente : contém
-
-@enduml
-
+' ═══════════════════════════════════════════════════════════════════
+' ZapIF — Índice de Diagramas
+'
+' Cada diagrama está em seu próprio arquivo para facilitar a leitura
+' e a renderização individual:
+'
+'   caso_de_uso.puml      → Diagrama de Caso de Uso
+'   diagrama_classes.puml → Diagrama de Classes (com pacotes)
+'   diagrama_pacotes.puml → Diagrama de Pacotes e Arquitetura
+'
+' Os diagramas de sequência abaixo permanecem aqui por serem
+' complementares e mais curtos.
 ' ═══════════════════════════════════════════════════════════════════
 
+' ───────────────────────────────────────────────────────────────────
+' SEQUÊNCIA 1 — Login / Cadastro
+' ───────────────────────────────────────────────────────────────────
 @startuml sequencia_login
-title Fluxo de Login / Cadastro
+title ZapIF — Fluxo de Login / Cadastro
 
-actor       Usuario
-participant ControladorLogin
-participant Conexao
-participant "Servidor\nManipuladorCliente" as MC
-database    BancoDados
+skinparam Shadowing false
+skinparam SequenceArrowThickness 1.5
+skinparam SequenceBoxBackgroundColor #F8FAFC
+skinparam SequenceBoxBorderColor #94A3B8
+skinparam ActorBackgroundColor #F0FDF4
+skinparam ActorBorderColor #16A34A
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #3B82F6
+skinparam DatabaseBackgroundColor #FFF7ED
+skinparam DatabaseBorderColor #EA580C
+skinparam ArrowColor #475569
+skinparam NoteBackgroundColor #FEFCE8
+skinparam NoteBorderColor #CA8A04
 
-Usuario -> ControladorLogin : clica em Login / Cadastro
+actor       "Usuário"         as U
+participant "ControladorLogin" as CL
+participant "Conexao"          as CN
+participant "ManipuladorCliente" as MC
+database    "BancoDados"       as BD
 
-ControladorLogin -> ControladorLogin : validar(nome, senha)
+U  -> CL : preenche nome + senha\ne clica Entrar / Cadastrar
+CL -> CL : validar(nome, senha)
 
 alt entrada inválida
-    ControladorLogin --> Usuario : exibe erro no labelStatus
+    CL --> U : exibe erro no labelStatus
 else entrada válida
-    ControladorLogin -> Conexao : enviar("LOGIN|usuario|senha")
-    ControladorLogin -> ControladorLogin : agendarTimeout()
 
-    Conexao -> MC : [TCP] "LOGIN|usuario|senha"
+    CL -> CN : enviar("LOGIN|nome|senha")
+    CL -> CL : agendarTimeout() — 10 s
 
-    MC -> BancoDados : autenticar(usuario, senha)
-    BancoDados --> MC : true / false
+    CN -> MC : [TCP] "LOGIN|nome|senha"
+    MC -> BD : autenticar(nome, senha)
+    BD --> MC : true / false
 
     alt credenciais OK
-        MC -> BancoDados : obterSalas()
-        BancoDados --> MC : ["geral","off-topic","ajuda"]
-        MC -> Conexao : "OK|LOGIN"
-        MC -> Conexao : "ROOMS|geral,off-topic,ajuda"
-
-        Conexao -> ControladorLogin : aoReceberMensagem("OK|LOGIN")
-        Conexao -> ControladorLogin : aoReceberMensagem("ROOMS|geral,off-topic,ajuda")
-
-        ControladorLogin -> ControladorLogin : cancelarTimeout()
-        ControladorLogin -> ControladorChat  : abrirChat(nomeUsuario, salas)
-    else credenciais INVÁLIDAS
-        MC -> Conexao : "ERROR|Usuário ou senha inválidos"
-        Conexao -> ControladorLogin : aoReceberMensagem("ERROR|Usuário ou senha inválidos")
-        ControladorLogin -> ControladorLogin : cancelarTimeout()
-        ControladorLogin --> Usuario : exibe mensagem de erro
+        MC -> BD : obterSalas()
+        BD --> MC : ["geral", "off-topic", "ajuda"]
+        MC -> CN : "OK|LOGIN"
+        MC -> CN : "ROOMS|geral,off-topic,ajuda"
+        CN -> CL : aoReceberMensagem("OK|LOGIN")
+        CN -> CL : aoReceberMensagem("ROOMS|...")
+        CL -> CL : cancelarTimeout()
+        CL -> CL : abrirChat(nome, salas)
+        note right of CL : troca de cena\npara ControladorChat
+    else credenciais inválidas
+        MC -> CN : "ERROR|Usuário ou senha inválidos"
+        CN -> CL : aoReceberMensagem("ERROR|...")
+        CL -> CL : cancelarTimeout()
+        CL --> U : exibe mensagem de erro
     end
 end
-
 @enduml
 
-' ═══════════════════════════════════════════════════════════════════
-
+' ───────────────────────────────────────────────────────────────────
+' SEQUÊNCIA 2 — Envio e Recebimento de Mensagem
+' ───────────────────────────────────────────────────────────────────
 @startuml sequencia_chat
-title Fluxo de Envio e Recebimento de Mensagem
+title ZapIF — Fluxo de Envio e Recebimento de Mensagem
 
-actor       Alice
-participant ControladorChat as CC
-participant Conexao          as CONN
-participant "Servidor\nManipuladorCliente" as MC
-participant Sala
-actor       Bob
+skinparam Shadowing false
+skinparam SequenceArrowThickness 1.5
+skinparam SequenceBoxBackgroundColor #F8FAFC
+skinparam SequenceBoxBorderColor #94A3B8
+skinparam ActorBackgroundColor #F0FDF4
+skinparam ActorBorderColor #16A34A
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #3B82F6
+skinparam ArrowColor #475569
+skinparam NoteBackgroundColor #FEFCE8
+skinparam NoteBorderColor #CA8A04
 
-Alice -> CC   : digita mensagem + pressiona Enter
-CC    -> CONN : enviar("MSG|geral|Alice|olá mundo")
+actor       "Alice"              as A
+participant "ControladorChat\n(Alice)" as CCA
+participant "Conexao\n(Alice)"   as CNA
+participant "ManipuladorCliente" as MC
+participant "Sala"               as S
+participant "Conexao\n(Bob)"     as CNB
+participant "ControladorChat\n(Bob)" as CCB
+actor       "Bob"                as B
 
-CONN  -> MC   : [TCP] "MSG|geral|Alice|olá mundo"
-MC    -> MC   : validarNomeUsuario / sanitizar
-MC    -> Sala : transmitir("MSG|geral|Alice|olá mundo", excluir=null)
+A   -> CCA : digita texto + Enter
+CCA -> CNA : enviar("MSG|geral|Alice|olá mundo")
+CNA -> MC  : [TCP] "MSG|geral|Alice|olá mundo"
 
-Sala  -> MC   : enviarMensagem(msg) → socket de Alice
-Sala  -> MC   : enviarMensagem(msg) → socket de Bob
+MC  -> MC  : sanitizar(texto)
+MC  -> MC  : BancoDados.salvarMensagem()
+note right of MC : persiste antes\ndo broadcast
 
-CONN  -> CC   : aoReceberMensagem("MSG|geral|Alice|olá mundo")
-CC    -> CC   : adicionarLinha("[HH:mm] Alice: olá mundo")
-CC    -> CC   : rolarParaBaixo()
+MC  -> S   : transmitir("MSG|geral|Alice|olá mundo", excluir=null)
 
-CONN  -> "ControladorChat\nde Bob" as CCB : aoReceberMensagem("MSG|geral|Alice|olá mundo")
-CCB   -> CCB  : adicionarLinha("[HH:mm] Alice: olá mundo")
-CCB   -> Bob  : mensagem aparece na ListView
+S   -> CNA : enviarMensagem(msg)
+S   -> CNB : enviarMensagem(msg)
 
+CNA -> CCA : aoReceberMensagem(msg)
+CCA -> CCA : adicionarLinha("[HH:mm] Alice: olá mundo")
+CCA -> CCA : rolarParaBaixo()
+
+CNB -> CCB : aoReceberMensagem(msg)
+CCB -> CCB : adicionarLinha("[HH:mm] Alice: olá mundo")
+CCB -> B   : mensagem aparece na ListView
 @enduml
 
-' ═══════════════════════════════════════════════════════════════════
-
+' ───────────────────────────────────────────────────────────────────
+' SEQUÊNCIA 3 — Heartbeat PING / PONG
+' ───────────────────────────────────────────────────────────────────
 @startuml sequencia_heartbeat
-title Fluxo de Heartbeat (PING/PONG)
+title ZapIF — Fluxo de Heartbeat (PING / PONG)
 
-participant "Servidor\nManipuladorCliente" as MC
-participant Conexao
+skinparam Shadowing false
+skinparam SequenceArrowThickness 1.5
+skinparam SequenceBoxBackgroundColor #F8FAFC
+skinparam SequenceBoxBorderColor #94A3B8
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #3B82F6
+skinparam ArrowColor #475569
+skinparam NoteBackgroundColor #FEFCE8
+skinparam NoteBorderColor #CA8A04
 
-MC    -> MC   : iniciarHeartbeat() — a cada 20 s
-MC    -> CONN : "PING"
-CONN  -> CONN : loopLeitura detecta "PING"
-CONN  -> MC   : "PONG"
+participant "ManipuladorCliente" as MC
+participant "Conexao"            as CN
 
-note over MC : reseta o timeout de leitura do socket (45 s)
+MC -> MC : iniciarHeartbeat()\na cada 20 s
+MC -> CN : "PING"
 
-alt sem PONG dentro do timeout
-    MC -> MC : leitura do socket expira → SocketTimeoutException
-    MC -> MC : limpar() → RegistroSessao.desregistrar()
-    CONN -> CONN : agendarRetry() após 5 s
+CN -> CN : loopLeitura detecta "PING"
+CN -> MC : "PONG"
+note right of MC : SO_TIMEOUT resetado\n(janela de 45 s)
+
+alt cliente não responde dentro de 45 s
+    MC -> MC : SocketTimeoutException
+    MC -> MC : limpar()
+    MC -> MC : RegistroSessao.desregistrar(nome)
+    CN -> CN : agendarRetry() — 5 s
 end
-
-@enduml
-
-' ═══════════════════════════════════════════════════════════════════
-
-@startuml caso_de_uso
-title ZapIF — Diagrama de Caso de Uso
-
-left to right direction
-skinparam actorStyle awesome
-
-actor "Usuário\nNão Autenticado" as Anonimo
-actor "Usuário\nAutenticado"     as Autenticado
-actor "Servidor"                 as Servidor <<system>>
-
-rectangle "ZapIF — Sistema de Chat" {
-
-    usecase "UC01\nCadastrar conta"       as UC01
-    usecase "UC02\nFazer login"           as UC02
-    usecase "UC03\nVisualizar salas"      as UC03
-    usecase "UC04\nEntrar em sala"        as UC04
-    usecase "UC05\nEnviar mensagem"       as UC05
-    usecase "UC06\nReceber mensagem\nem tempo real" as UC06
-    usecase "UC07\nVisualizar histórico\nda sala"   as UC07
-    usecase "UC08\nTrocar de sala"        as UC08
-    usecase "UC09\nDesconectar"           as UC09
-
-    usecase "UC10\nValidar credenciais"   as UC10
-    usecase "UC11\nPersistir mensagem"    as UC11
-    usecase "UC12\nTransmitir mensagem\n(broadcast)" as UC12
-    usecase "UC13\nHeartbeat PING/PONG"  as UC13
-    usecase "UC14\nReconectar\nautomaticamente" as UC14
-}
-
-' Ator não autenticado
-Anonimo --> UC01
-Anonimo --> UC02
-
-' Ator autenticado (herda do não autenticado após login)
-Autenticado --> UC03
-Autenticado --> UC04
-Autenticado --> UC05
-Autenticado --> UC06
-Autenticado --> UC07
-Autenticado --> UC08
-Autenticado --> UC09
-Autenticado --> UC14
-
-' Servidor (casos internos/sistema)
-Servidor --> UC10
-Servidor --> UC11
-Servidor --> UC12
-Servidor --> UC13
-
-' Inclusões
-UC02 ..> UC10 : <<include>>
-UC05 ..> UC11 : <<include>>
-UC05 ..> UC12 : <<include>>
-UC04 ..> UC07 : <<include>>
-
-' Extensões
-UC09 ..> UC14 : <<extend>>\nse queda de rede
-
-@enduml
-
-' ═══════════════════════════════════════════════════════════════════
-
-@startuml diagrama_pacotes
-title ZapIF — Diagrama de Pacotes e Arquitetura
-
-skinparam packageStyle rectangle
-skinparam linetype ortho
-
-package "Máquina do Usuário" {
-
-    package "client" <<Application>> {
-
-        package "client.ui" {
-            [ControladorLogin]
-            [ControladorChat]
-        }
-
-        package "client.network" {
-            [Conexao]
-            [OuvinteMensagem]
-            [OuvinteStatusConexao]
-        }
-
-        package "client.model" {
-            [Mensagem]
-            [Usuario]
-        }
-
-        [Main]
-    }
-}
-
-package "Servidor (processo único)" {
-
-    package "server" <<Application>> {
-        [Servidor]
-        [ManipuladorCliente]
-        [Sala]
-        [RegistroSessao]
-        [BancoDados]
-    }
-
-    database "SQLite\nchat.db" as DB {
-        [usuarios]
-        [salas]
-        [mensagens]
-    }
-}
-
-' Dependências internas — cliente
-[Main]              --> [Conexao]           : cria
-[ControladorLogin]  --> [Conexao]           : usa
-[ControladorChat]   --> [Conexao]           : usa
-[ControladorLogin]  ..> [ControladorChat]   : abre
-[ControladorChat]   ..> [Mensagem]          : instancia
-[Conexao]           ..> [OuvinteMensagem]   : notifica
-[Conexao]           ..> [OuvinteStatusConexao] : notifica
-
-' Dependências internas — servidor
-[Servidor]          --> [ManipuladorCliente] : submete ao pool
-[ManipuladorCliente] --> [Sala]              : entra/sai
-[ManipuladorCliente] --> [BancoDados]        : persiste/consulta
-[ManipuladorCliente] --> [RegistroSessao]    : registra/libera
-[Sala]              --> [ManipuladorCliente] : broadcast
-[BancoDados]        --> DB                  : JDBC/SQLite
-
-' Comunicação entre camadas
-[Conexao] <--> [ManipuladorCliente] : TCP Socket\n(porta 5001)\nprotocolo texto "|"
-
 @enduml

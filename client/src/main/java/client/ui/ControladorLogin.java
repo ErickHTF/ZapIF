@@ -27,7 +27,6 @@ public class ControladorLogin implements OuvinteMensagem {
 
     private Conexao conexao;
 
-    // agendador separado da Conexao para não interferir nos retries de rede
     private final ScheduledExecutorService agendador =
             Executors.newSingleThreadScheduledExecutor(r -> {
                 Thread t = new Thread(r, "login-timeout");
@@ -41,12 +40,11 @@ public class ControladorLogin implements OuvinteMensagem {
         conexao = Main.getConexao();
         conexao.adicionarOuvinteMensagem(this);
 
-        // atualiza status de conexão; DESCONECTADO cancela timeout ativo pois o servidor não vai responder
         conexao.adicionarOuvinteStatus(status -> {
             switch (status) {
-                case CONECTANDO    -> definirStatus("Conectando...", false);
-                case CONECTADO     -> definirStatus("Conectado", true);
-                case DESCONECTADO  -> {
+                case CONECTANDO   -> definirStatus("Conectando...", false);
+                case CONECTADO    -> definirStatus("Conectado", true);
+                case DESCONECTADO -> {
                     cancelarTimeout();
                     definirStatus("Sem conexão — tentando reconectar...", false);
                 }
@@ -56,7 +54,7 @@ public class ControladorLogin implements OuvinteMensagem {
 
     @FXML
     private void aoFazerLogin() {
-        String nome = campoUsuario.getText().trim();
+        String nome  = campoUsuario.getText().trim();
         String senha = campoSenha.getText();
 
         String erro = validar(nome, senha);
@@ -69,7 +67,7 @@ public class ControladorLogin implements OuvinteMensagem {
 
     @FXML
     private void aoRegistrar() {
-        String nome = campoUsuario.getText().trim();
+        String nome  = campoUsuario.getText().trim();
         String senha = campoSenha.getText();
 
         String erro = validar(nome, senha);
@@ -80,7 +78,6 @@ public class ControladorLogin implements OuvinteMensagem {
         conexao.enviar("REGISTER|" + nome + "|" + senha);
     }
 
-    // Respostas do servidor
     @Override
     public void aoReceberMensagem(String mensagem) {
         String[] partes = mensagem.split("\\|", 3);
@@ -104,8 +101,6 @@ public class ControladorLogin implements OuvinteMensagem {
         }
     }
 
-    // remove-se como ouvinte antes de abrir o chat para que as mensagens seguintes
-    // sejam tratadas pelo ControladorChat
     private void abrirChat(String nomeUsuario, String[] salas) {
         conexao.removerOuvinteMensagem(this);
         agendador.shutdown();
@@ -128,19 +123,15 @@ public class ControladorLogin implements OuvinteMensagem {
         });
     }
 
-    // -- helpers ---------------------------------------------------------------
-
-    // validação no cliente para evitar uso do servidor em erros muito simples
     private static String validar(String nome, String senha) {
         if (nome.isEmpty() || senha.isEmpty()) return "Preencha todos os campos";
         if (nome.length() < 3 || nome.length() > 24)
             return "Nome deve ter entre 3 e 24 caracteres";
         if (nome.contains("|")) return "Nome não pode conter o caractere '|'";
-        if (senha.length() < 6)  return "Senha deve ter pelo menos 6 caracteres";
+        if (senha.length() < 6) return "Senha deve ter pelo menos 6 caracteres";
         return null;
     }
 
-    // duplo clique cancela o timer anterior e reinicia do zero
     private void agendarTimeout() {
         cancelarTimeout();
         timeoutPendente = agendador.schedule(
