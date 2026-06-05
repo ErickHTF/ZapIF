@@ -77,6 +77,7 @@ public class ManipuladorCliente implements Runnable {
             case "REGISTER" -> processarRegistro(partes);
             case "LOGIN"    -> processarLogin(partes);
             case "JOIN"     -> processarEntradaSala(partes);
+            case "LEAVE"    -> processarSaidaSala();
             case "MSG"      -> processarMensagemChat(partes);
             case "PONG"     -> {}
             default         -> enviarMensagem("ERROR|Comando desconhecido");
@@ -121,6 +122,7 @@ public class ManipuladorCliente implements Runnable {
         this.nomeUsuario = nome;
         enviarMensagem("OK|LOGIN");
         enviarMensagem("ROOMS|" + String.join(",", BancoDados.obterSalas()));
+        enviarMensagem("ONLINE|" + RegistroSessao.totalOnline() + "|" + Sala.construirContagens());
         iniciarHeartbeat();
     }
 
@@ -154,6 +156,15 @@ public class ManipuladorCliente implements Runnable {
         enviarMensagem(sb.toString());
 
         novaSala.transmitir("[" + nomeUsuario + " entrou]", this);
+    }
+
+    private void processarSaidaSala() {
+        Sala s = salaAtual;
+        if (s == null) return;
+        s.removerCliente(this);
+        s.transmitir("[" + nomeUsuario + " saiu]", null);
+        salaAtual = null;
+        transmitirOnlineParaTodos();
     }
 
     private void processarMensagemChat(String[] partes) {
