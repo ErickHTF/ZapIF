@@ -29,6 +29,11 @@ public class ControladorChat implements OuvinteMensagem {
     @FXML private VBox             painelChat;
     @FXML private Label            labelTotalOnline;
     @FXML private Label            labelNomeUsuario;
+    @FXML private Label            labelSetaSalas;
+    @FXML private Label            labelSalas;
+
+    private boolean salasExpandidas  = true;
+    private boolean suprimirSelecao = false;
 
     private Conexao conexao;
     private String  nomeUsuario;
@@ -50,6 +55,23 @@ public class ControladorChat implements OuvinteMensagem {
             });
         });
 
+        listaMensagens.setCellFactory(lv -> new ListCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                getStyleClass().removeAll("celula-separador", "celula-mensagem");
+                if (empty || item == null) {
+                    setText(null);
+                } else if (item.startsWith("── ")) {
+                    setText(item);
+                    getStyleClass().add("celula-separador");
+                } else {
+                    setText(item);
+                    getStyleClass().add("celula-mensagem");
+                }
+            }
+        });
+
         listaSalas.setCellFactory(lv -> new ListCell<>() {
             private final Label labelNome   = new Label();
             private final Label labelCount  = new Label();
@@ -57,10 +79,8 @@ public class ControladorChat implements OuvinteMensagem {
             private final HBox  caixa       = new HBox(labelNome, spacer, labelCount);
             {
                 HBox.setHgrow(spacer, Priority.ALWAYS);
-                labelNome.setStyle("-fx-text-fill: #a6adc8; -fx-font-size: 14px;");
-                labelCount.setStyle("-fx-text-fill: #a6e3a1; -fx-font-size: 13px;");
-                caixa.setStyle("-fx-padding: 0; -fx-alignment: CENTER_LEFT;");
-                setStyle("-fx-padding: 8 14;");
+                labelNome.getStyleClass().add("sala-nome");
+                caixa.getStyleClass().add("sala-cell");
             }
 
             @Override
@@ -74,8 +94,9 @@ public class ControladorChat implements OuvinteMensagem {
                     Integer n = contagemPorSala.get(item);
                     labelNome.setText(item);
                     labelCount.setText(n != null ? "[" + n + "]" : "");
-                    labelCount.setStyle("-fx-font-size: 13px; -fx-text-fill: "
-                            + (n != null && n > 0 ? "#a6e3a1" : "#6c7086") + ";");
+                    labelCount.getStyleClass().removeAll("sala-count-ativo", "sala-count-vazio");
+                    labelCount.getStyleClass().add(
+                            n != null && n > 0 ? "sala-count-ativo" : "sala-count-vazio");
                     setGraphic(caixa);
                     setMouseTransparent(false);
                     setFocusTraversable(true);
@@ -84,7 +105,7 @@ public class ControladorChat implements OuvinteMensagem {
         });
 
         listaSalas.getSelectionModel().selectedItemProperty().addListener((obs, antiga, sala) -> {
-            if (sala != null && !sala.equals(salaAtual)) entrarNaSala(sala);
+            if (!suprimirSelecao && sala != null && !sala.equals(salaAtual)) entrarNaSala(sala);
         });
     }
 
@@ -104,20 +125,32 @@ public class ControladorChat implements OuvinteMensagem {
             painelBemVindo.setManaged(false);
             painelChat.setVisible(true);
             painelChat.setManaged(true);
+            labelSalas.getStyleClass().add("label-secao-ativo");
         });
         conexao.enviar("JOIN|" + sala);
     }
 
     @FXML
+    private void aoAlternarSalas() {
+        salasExpandidas = !salasExpandidas;
+        listaSalas.setVisible(salasExpandidas);
+        listaSalas.setManaged(salasExpandidas);
+        labelSetaSalas.setText(salasExpandidas ? "▼" : "▶");
+    }
+
+    @FXML
     private void aoClicarInicio() {
-        listaSalas.getSelectionModel().clearSelection();
+        String saindo = salaAtual;
+        listaSalas.getSelectionModel().clearSelection(); // salaAtual ainda "ajuda" → listener não re-entra
         salaAtual = null;
+        if (saindo != null) conexao.enviar("LEAVE|" + saindo);
         Platform.runLater(() -> {
             listaMensagens.getItems().clear();
             painelChat.setVisible(false);
             painelChat.setManaged(false);
             painelBemVindo.setVisible(true);
             painelBemVindo.setManaged(true);
+            labelSalas.getStyleClass().remove("label-secao-ativo");
         });
     }
 
@@ -157,7 +190,9 @@ public class ControladorChat implements OuvinteMensagem {
                                 catch (NumberFormatException ignorado) {}
                             }
                         }
+                        suprimirSelecao = true;
                         listaSalas.refresh();
+                        suprimirSelecao = false;
                     });
                 }
             }

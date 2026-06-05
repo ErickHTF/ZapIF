@@ -10,79 +10,68 @@
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="client.ui.ControladorChat"
             stylesheets="@style.css"
-            prefWidth="860" prefHeight="560"
-            style="-fx-background-color: #1e1e2e;">
+            prefWidth="860" prefHeight="560">
 
     <!-- Banner offline -->
     <top>
-        <HBox fx:id="bannerOffline" visible="false" managed="false"
-              alignment="CENTER"
-              style="-fx-background-color: #f38ba8; -fx-padding: 6 16;">
-            <Label text="Sem conexão — reconectando..."
-                   style="-fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 12px;"/>
+        <HBox fx:id="bannerOffline" visible="false" managed="false" alignment="CENTER">
+            <Label text="Sem conexão — reconectando..."/>
         </HBox>
     </top>
 
     <!-- Barra lateral -->
     <left>
-        <VBox minWidth="170" maxWidth="170"
-              style="-fx-background-color: #181825; -fx-border-color: #313244; -fx-border-width: 0 1 0 0;">
+        <VBox fx:id="sidebar" minWidth="170" maxWidth="170">
 
             <!-- Perfil do usuário -->
-            <HBox alignment="CENTER_LEFT" spacing="10"
-                  style="-fx-padding: 12 12 10 12; -fx-border-width: 0 0 1 0; -fx-border-color: #313244;">
+            <HBox styleClass="perfil-header" alignment="CENTER" spacing="10">
                 <ImageView fitWidth="36" fitHeight="36" preserveRatio="true">
                     <image><Image url="@../icon.png"/></image>
                 </ImageView>
-                <VBox spacing="2">
-                    <Label text="Meu status:"
-                           style="-fx-text-fill: #6c7086; -fx-font-size: 11px;"/>
-                    <HBox spacing="4" alignment="CENTER_LEFT">
-                        <Label fx:id="labelNomeUsuario" text=""
-                               style="-fx-text-fill: #cdd6f4; -fx-font-size: 13px; -fx-font-weight: bold;"/>
-                        <Label text="(Online)"
-                               style="-fx-text-fill: #a6e3a1; -fx-font-size: 11px;"/>
-                    </HBox>
-                </VBox>
+                <HBox spacing="4" alignment="CENTER_LEFT">
+                    <Label fx:id="labelNomeUsuario" text=""/>
+                    <Label text="(Online)" styleClass="label-online"/>
+                </HBox>
             </HBox>
 
-            <HBox alignment="CENTER_LEFT" style="-fx-padding: 12 12 4 12; -fx-spacing: 6;">
-                <Label text="SALAS"
-                       style="-fx-text-fill: #6c7086; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+            <!-- Contador online -->
+            <HBox styleClass="online-secao" alignment="CENTER_LEFT">
+                <Label fx:id="labelTotalOnline" text="" styleClass="label-online-count"/>
+            </HBox>
+
+            <HBox styleClass="salas-header" alignment="CENTER_LEFT"
+                  onMouseClicked="#aoAlternarSalas">
+                <Label fx:id="labelSalas" text="SALAS" styleClass="label-secao"/>
                 <Region HBox.hgrow="ALWAYS"/>
-                <Label fx:id="labelTotalOnline" text=""
-                       style="-fx-text-fill: #a6e3a1; -fx-font-size: 12px;"/>
+                <Label fx:id="labelSetaSalas" text="▼" styleClass="label-seta"/>
             </HBox>
 
             <ListView fx:id="listaSalas" VBox.vgrow="ALWAYS"/>
 
+            <Region VBox.vgrow="ALWAYS"/>
+
             <Button text=" &lt; Início" onAction="#aoClicarInicio"
-                    maxWidth="1.7976931348623157E308"
-                    style="-fx-background-color: transparent; -fx-text-fill: #585b70;
-                           -fx-font-size: 13px; -fx-padding: 10 12; -fx-cursor: hand;
-                           -fx-border-width: 1 0 0 0; -fx-border-color: #313244;
-                           -fx-alignment: CENTER_LEFT;"/>
+                    styleClass="botao-inicio"
+                    maxWidth="1.7976931348623157E308"/>
         </VBox>
     </left>
 
     <!-- Área principal -->
     <center>
-        <StackPane style="-fx-background-color: #1e1e2e;">
+        <StackPane>
 
             <!-- Tela de boas-vindas (visível antes de selecionar uma sala) -->
             <VBox fx:id="painelBemVindo" alignment="CENTER" spacing="16">
                 <ImageView fitWidth="96" fitHeight="96" preserveRatio="true">
                     <image><Image url="@../icon.png"/></image>
                 </ImageView>
-                <Label text="ZapIF"
-                       style="-fx-text-fill: #89b4fa; -fx-font-size: 26px; -fx-font-weight: bold;"/>
+                <Label text="ZapIF" styleClass="boas-vindas-titulo"/>
                 <Label text="Selecione uma sala para começar a conversar."
-                       style="-fx-text-fill: #cdd6f4; -fx-font-size: 14px;"/>
+                       styleClass="boas-vindas-instrucao"/>
             </VBox>
 
             <!-- Área de chat (visível após selecionar uma sala) -->
             <VBox fx:id="painelChat" visible="false" managed="false"
-                  style="-fx-background-color: #1e1e2e;"
                   maxWidth="1.7976931348623157E308" maxHeight="1.7976931348623157E308">
                 <ListView fx:id="listaMensagens" VBox.vgrow="ALWAYS">
                     <padding><Insets top="8" right="12" bottom="4" left="12"/></padding>
@@ -90,7 +79,7 @@
 
                 <Separator/>
 
-                <HBox spacing="8" style="-fx-padding: 10 12 12 12;">
+                <HBox styleClass="input-area" HBox.hgrow="ALWAYS">
                     <TextField fx:id="campoMensagem" HBox.hgrow="ALWAYS"
                                promptText="Mensagem..."
                                onKeyPressed="#aoPresionarTecla"/>
