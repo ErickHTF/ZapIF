@@ -1,6 +1,175 @@
-/* -- cores base ---------------------------------------------------------- */
+/* -- base ---------------------------------------------------------------- */
 .root {
-    -fx-background-color: #1e1e2e;
+    -fx-background-color: #f2f2f2;
+}
+
+/* -- login --------------------------------------------------------------- */
+.app-title {
+    -fx-text-fill: #28231f;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.subtitle {
+    -fx-text-fill: #888888;
+    -fx-font-size: 12px;
+}
+
+.campo-label {
+    -fx-text-fill: #28231f;
+    -fx-font-size: 12px;
+    -fx-padding: 6 0 2 0;
+}
+
+.link-senha {
+    -fx-text-fill: #389739;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-underline: true;
+}
+
+.link-senha:hover {
+    -fx-text-fill: #2d7a2e;
+}
+
+.label-feedback {
+    -fx-text-fill: #c8131a;
+    -fx-font-size: 12px;
+}
+
+.servidor-conectando {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 11px;
+}
+
+.servidor-online {
+    -fx-text-fill: #389739;
+    -fx-font-size: 11px;
+}
+
+.servidor-offline {
+    -fx-text-fill: #c8131a;
+    -fx-font-size: 11px;
+}
+
+/* -- banner offline ------------------------------------------------------ */
+#bannerOffline {
+    -fx-background-color: #c8131a;
+    -fx-padding: 6 16;
+}
+
+#bannerOffline .label {
+    -fx-text-fill: #ffffff;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+/* -- sidebar ------------------------------------------------------------- */
+#sidebar {
+    -fx-background-color: #e4e4e4;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 0 1 0 0;
+}
+
+.perfil-header {
+    -fx-padding: 14 12 12 12;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #cccccc;
+}
+
+.label-muted {
+    -fx-text-fill: #888888;
+    -fx-font-size: 11px;
+}
+
+#labelNomeUsuario {
+    -fx-text-fill: #28231f;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.label-online {
+    -fx-text-fill: #389739;
+    -fx-font-size: 11px;
+}
+
+.online-secao {
+    -fx-padding: 4 12 4 12;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: #cccccc;
+}
+
+.label-online-count {
+    -fx-text-fill: #389739;
+    -fx-font-size: 11px;
+}
+
+.salas-header {
+    -fx-padding: 8 12 4 12;
+    -fx-spacing: 6;
+    -fx-cursor: hand;
+}
+
+.salas-header:hover .label-secao {
+    -fx-text-fill: #28231f;
+}
+
+.label-seta {
+    -fx-text-fill: #bbbbbb;
+    -fx-font-size: 9px;
+}
+
+.label-secao {
+    -fx-text-fill: #888888;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.label-secao-ativo {
+    -fx-text-fill: #28231f;
+}
+
+#labelTotalOnline {
+    -fx-text-fill: #389739;
+    -fx-font-size: 12px;
+}
+
+.botao-inicio {
+    -fx-background-color: transparent;
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 13px;
+    -fx-padding: 10 12;
+    -fx-cursor: hand;
+    -fx-border-width: 1 0 0 0;
+    -fx-border-color: #cccccc;
+    -fx-alignment: CENTER_LEFT;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+}
+
+.botao-inicio:hover {
+    -fx-background-color: #d8d8d8;
+    -fx-text-fill: #28231f;
+}
+
+/* -- lista de salas (células) -------------------------------------------- */
+.sala-cell {
+    -fx-alignment: CENTER_LEFT;
+}
+
+.sala-nome {
+    -fx-text-fill: #28231f;
+    -fx-font-size: 14px;
+}
+
+.sala-count-ativo {
+    -fx-text-fill: #389739;
+    -fx-font-size: 13px;
+}
+
+.sala-count-vazio {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 13px;
 }
 
 /* -- list view ----------------------------------------------------------- */
@@ -15,7 +184,7 @@
 .list-view .list-cell:even,
 .list-view .list-cell:empty {
     -fx-background-color: transparent;
-    -fx-text-fill: #cdd6f4;
+    -fx-text-fill: #28231f;
     -fx-font-size: 13px;
     -fx-padding: 8 12;
     -fx-border-width: 0;
@@ -24,39 +193,44 @@
 .list-view .list-cell:hover,
 .list-view .list-cell:odd:hover,
 .list-view .list-cell:even:hover {
-    -fx-background-color: #313244;
+    -fx-background-color: #e0e0e0;
 }
 
 .list-view .list-cell:selected,
 .list-view .list-cell:selected:odd,
 .list-view .list-cell:selected:even {
-    -fx-background-color: #45475a;
-    -fx-text-fill: #cdd6f4;
+    -fx-background-color: #d4d4d4;
+    -fx-text-fill: #28231f;
 }
 
 /* -- sidebar sala list --------------------------------------------------- */
-#roomList .list-cell,
-#roomList .list-cell:odd,
-#roomList .list-cell:even,
-#roomList .list-cell:empty {
+#listaSalas .list-cell,
+#listaSalas .list-cell:odd,
+#listaSalas .list-cell:even,
+#listaSalas .list-cell:empty {
     -fx-background-color: transparent;
-    -fx-text-fill: #a6adc8;
-    -fx-font-size: 13px;
     -fx-padding: 8 14;
 }
 
-#roomList .list-cell:hover,
-#roomList .list-cell:odd:hover,
-#roomList .list-cell:even:hover {
-    -fx-background-color: #24243a;
+#listaSalas .list-cell:hover,
+#listaSalas .list-cell:odd:hover,
+#listaSalas .list-cell:even:hover {
+    -fx-background-color: #d8d8d8;
 }
 
-#roomList .list-cell:selected,
-#roomList .list-cell:selected:odd,
-#roomList .list-cell:selected:even {
-    -fx-background-color: #2a2a45;
-    -fx-text-fill: #89b4fa;
-    -fx-font-weight: bold;
+#listaSalas .list-cell:selected,
+#listaSalas .list-cell:selected:odd,
+#listaSalas .list-cell:selected:even {
+    -fx-background-color: #389739;
+}
+
+#listaSalas .list-cell:selected .sala-nome {
+    -fx-text-fill: #ffffff;
+}
+
+#listaSalas .list-cell:selected .sala-count-ativo,
+#listaSalas .list-cell:selected .sala-count-vazio {
+    -fx-text-fill: #d0ead0;
 }
 
 /* -- scroll bar ---------------------------------------------------------- */
@@ -69,8 +243,8 @@
 }
 
 .scroll-bar .thumb {
-    -fx-background-color: #45475a;
-    -fx-background-radius: 0;
+    -fx-background-color: #c0c0c0;
+    -fx-background-radius: 4;
 }
 
 .scroll-bar .increment-button,
@@ -81,51 +255,85 @@
 
 /* -- text field ---------------------------------------------------------- */
 .text-field, .password-field {
-    -fx-background-color: #313244;
-    -fx-text-fill: #cdd6f4;
-    -fx-prompt-text-fill: #585b70;
-    -fx-border-color: #45475a;
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #28231f;
+    -fx-prompt-text-fill: #aaaaaa;
+    -fx-border-color: #cccccc;
     -fx-border-width: 1;
-    -fx-padding: 10 12;
+    -fx-padding: 5 8;
     -fx-font-size: 13px;
-    -fx-highlight-fill: #89b4fa;
-    -fx-highlight-text-fill: #1e1e2e;
+    -fx-highlight-fill: #389739;
+    -fx-highlight-text-fill: #ffffff;
 }
 
 .text-field:focused, .password-field:focused {
-    -fx-border-color: #89b4fa;
-    -fx-background-color: #313244;
+    -fx-border-color: #389739;
+    -fx-background-color: #ffffff;
 }
 
 /* -- botoes -------------------------------------------------------------- */
 .button {
-    -fx-background-color: #313244;
-    -fx-text-fill: #cdd6f4;
-    -fx-border-color: #45475a;
-    -fx-border-width: 1;
+    -fx-background-color: #d8d8d8;
+    -fx-text-fill: #444444;
+    -fx-border-width: 0;
+    -fx-background-radius: 2;
     -fx-font-size: 13px;
+    -fx-font-weight: bold;
     -fx-cursor: hand;
-    -fx-padding: 10 20;
+    -fx-padding: 8 20;
+    -fx-effect: null;
 }
 
 .button:hover {
-    -fx-background-color: #45475a;
+    -fx-background-color: #c8c8c8;
 }
 
 .button.primary {
-    -fx-background-color: #89b4fa;
-    -fx-text-fill: #1e1e2e;
-    -fx-font-weight: bold;
+    -fx-background-color: #4a8a4a;
+    -fx-text-fill: #ffffff;
     -fx-border-width: 0;
+    -fx-background-radius: 2;
 }
 
 .button.primary:hover {
-    -fx-background-color: #74c7ec;
+    -fx-background-color: #3d7a3d;
 }
 
 /* -- separator ----------------------------------------------------------- */
 .separator .line {
-    -fx-border-color: #313244;
+    -fx-border-color: #cccccc;
     -fx-border-width: 1 0 0 0;
 }
 
+/* -- boas-vindas --------------------------------------------------------- */
+.boas-vindas-titulo {
+    -fx-text-fill: #389739;
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+}
+
+.boas-vindas-instrucao {
+    -fx-text-fill: #28231f;
+    -fx-font-size: 14px;
+}
+
+/* -- mensagens ----------------------------------------------------------- */
+.celula-separador {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-size: 11px;
+    -fx-alignment: CENTER;
+    -fx-padding: 6 0;
+    -fx-background-color: transparent;
+}
+
+.celula-mensagem {
+    -fx-text-fill: #28231f;
+    -fx-font-size: 13px;
+}
+
+/* -- area de input ------------------------------------------------------- */
+.input-area {
+    -fx-padding: 10 12 12 12;
+    -fx-spacing: 8;
+    -fx-background-color: #f2f2f2;
+}
