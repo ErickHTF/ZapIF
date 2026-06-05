@@ -26,5 +26,15 @@ public class Sala {
         }
     }
 
-    public String getNome() { return nome; }
+    public String getNome()   { return nome; }
+    public int    getContagem() { return clientes.size(); }
+
+    public static String construirContagens() {
+        StringBuilder sb = new StringBuilder();
+        for (Map.Entry<String, Sala> e : salas.entrySet()) {
+            if (sb.length() > 0) sb.append(",");
+            sb.append(e.getKey()).append(":").append(e.getValue().getContagem());
+        }
+        return sb.toString();
+    }
 }

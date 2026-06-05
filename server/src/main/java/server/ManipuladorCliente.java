@@ -3,12 +3,21 @@ package server;
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class ManipuladorCliente implements Runnable {
+
+    private static final Set<ManipuladorCliente> todosClientes = ConcurrentHashMap.newKeySet();
+
+    static void transmitirOnlineParaTodos() {
+        String msg = "ONLINE|" + RegistroSessao.totalOnline() + "|" + Sala.construirContagens();
+        for (ManipuladorCliente c : todosClientes) c.enviarMensagem(msg);
+    }
 
     static final int MAX_NOME_USUARIO   = 24;
     static final int MIN_NOME_USUARIO   = 3;
@@ -35,6 +44,7 @@ public class ManipuladorCliente implements Runnable {
 
     @Override
     public void run() {
+        todosClientes.add(this);
         try {
             socket.setSoTimeout(TIMEOUT_LEITURA_MS);
 
@@ -137,6 +147,8 @@ public class ManipuladorCliente implements Runnable {
         novaSala.adicionarCliente(this);
         salaAtual = novaSala;
 
+        transmitirOnlineParaTodos();
+
         StringBuilder sb = new StringBuilder("HISTORY|").append(nomeSala);
         for (String entrada : historico) sb.append("|").append(entrada);
         enviarMensagem(sb.toString());
@@ -181,6 +193,7 @@ public class ManipuladorCliente implements Runnable {
         agendadorPing.shutdown();
 
         RegistroSessao.desregistrar(nomeUsuario);
+        todosClientes.remove(this);
 
         Sala s = salaAtual;
         if (s != null) {
@@ -188,6 +201,9 @@ public class ManipuladorCliente implements Runnable {
             String u = nomeUsuario;
             if (u != null) s.transmitir("[" + u + " desconectou]", null);
         }
+
+        transmitirOnlineParaTodos();
+
         try { socket.close(); } catch (IOException ignorado) {}
     }
 
