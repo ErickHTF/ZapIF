@@ -15,7 +15,7 @@ public class Conexao {
 
     public enum Status { CONECTANDO, CONECTADO, DESCONECTADO }
 
-    static final String HOST               = "localhost";
+    static final String HOST               = "98.81.174.59";
     static final int    PORTA              = 5001;
     static final int    SEGUNDOS_RETRY     = 5;
     static final int    TIMEOUT_LEITURA_MS = 60_000;

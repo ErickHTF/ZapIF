@@ -40,6 +40,12 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>client/client.Main</mainClass>
+                    <launcher>ZapIF</launcher>
+                    <jlinkImageName>zapif-image</jlinkImageName>
+                    <noManPages>true</noManPages>
+                    <stripDebug>true</stripDebug>
+                    <noHeaderFiles>true</noHeaderFiles>
+                    <compress>2</compress>
                 </configuration>
             </plugin>
         </plugins>
