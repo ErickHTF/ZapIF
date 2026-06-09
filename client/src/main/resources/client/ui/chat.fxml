@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="client.ui.ControladorChat"
+            stylesheets="@style.css"
+            prefWidth="860" prefHeight="560"
+            style="-fx-background-color: #1e1e2e;">
+
+    <!-- Banner offline -->
+    <top>
+        <HBox fx:id="bannerOffline" visible="false" managed="false"
+              alignment="CENTER"
+              style="-fx-background-color: #f38ba8; -fx-padding: 6 16;">
+            <Label text="Sem conexão — reconectando..."
+                   style="-fx-text-fill: #1e1e2e; -fx-font-weight: bold; -fx-font-size: 12px;"/>
+        </HBox>
+    </top>
+
+    <!-- Barra lateral -->
+    <left>
+        <VBox minWidth="160" maxWidth="160"
+              style="-fx-background-color: #181825; -fx-border-color: #313244; -fx-border-width: 0 1 0 0;">
+            <Label text="SALAS"
+                   style="-fx-text-fill: #6c7086; -fx-font-size: 10px; -fx-font-weight: bold;
+                          -fx-padding: 14 12 6 12;"/>
+            <ListView fx:id="listaSalas" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </left>
+
+    <!-- Área principal -->
+    <center>
+        <VBox style="-fx-background-color: #1e1e2e;">
+            <ListView fx:id="listaMensagens" VBox.vgrow="ALWAYS">
+                <padding><Insets top="8" right="12" bottom="4" left="12"/></padding>
+            </ListView>
+
+            <Separator/>
+
+            <HBox spacing="8" style="-fx-padding: 10 12 12 12;">
+                <TextField fx:id="campoMensagem" HBox.hgrow="ALWAYS"
+                           promptText="Mensagem..."
+                           onKeyPressed="#aoPresionarTecla"/>
+                <Button fx:id="botaoEnviar" text="Enviar" onAction="#aoEnviar"
+                        styleClass="button,primary"/>
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>

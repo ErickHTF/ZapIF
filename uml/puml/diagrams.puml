@@ -1,0 +1,155 @@
+' ═══════════════════════════════════════════════════════════════════
+' ZapIF — Índice de Diagramas
+'
+' Cada diagrama está em seu próprio arquivo para facilitar a leitura
+' e a renderização individual:
+'
+'   caso_de_uso.puml      → Diagrama de Caso de Uso
+'   diagrama_classes.puml → Diagrama de Classes (com pacotes)
+'   diagrama_pacotes.puml → Diagrama de Pacotes e Arquitetura
+'
+' Os diagramas de sequência abaixo permanecem aqui por serem
+' complementares e mais curtos.
+' ═══════════════════════════════════════════════════════════════════
+
+' ───────────────────────────────────────────────────────────────────
+' SEQUÊNCIA 1 — Login / Cadastro
+' ───────────────────────────────────────────────────────────────────
+@startuml sequencia_login
+title ZapIF — Fluxo de Login / Cadastro
+
+skinparam Shadowing false
+skinparam SequenceArrowThickness 1.5
+skinparam SequenceBoxBackgroundColor #F8FAFC
+skinparam SequenceBoxBorderColor #94A3B8
+skinparam ActorBackgroundColor #F0FDF4
+skinparam ActorBorderColor #16A34A
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #3B82F6
+skinparam DatabaseBackgroundColor #FFF7ED
+skinparam DatabaseBorderColor #EA580C
+skinparam ArrowColor #475569
+skinparam NoteBackgroundColor #FEFCE8
+skinparam NoteBorderColor #CA8A04
+
+actor       "Usuário"         as U
+participant "ControladorLogin" as CL
+participant "Conexao"          as CN
+participant "ManipuladorCliente" as MC
+database    "BancoDados"       as BD
+
+U  -> CL : preenche nome + senha\ne clica Entrar / Cadastrar
+CL -> CL : validar(nome, senha)
+
+alt entrada inválida
+    CL --> U : exibe erro no labelStatus
+else entrada válida
+
+    CL -> CN : enviar("LOGIN|nome|senha")
+    CL -> CL : agendarTimeout() — 10 s
+
+    CN -> MC : [TCP] "LOGIN|nome|senha"
+    MC -> BD : autenticar(nome, senha)
+    BD --> MC : true / false
+
+    alt credenciais OK
+        MC -> BD : obterSalas()
+        BD --> MC : ["geral", "off-topic", "ajuda"]
+        MC -> CN : "OK|LOGIN"
+        MC -> CN : "ROOMS|geral,off-topic,ajuda"
+        CN -> CL : aoReceberMensagem("OK|LOGIN")
+        CN -> CL : aoReceberMensagem("ROOMS|...")
+        CL -> CL : cancelarTimeout()
+        CL -> CL : abrirChat(nome, salas)
+        note right of CL : troca de cena\npara ControladorChat
+    else credenciais inválidas
+        MC -> CN : "ERROR|Usuário ou senha inválidos"
+        CN -> CL : aoReceberMensagem("ERROR|...")
+        CL -> CL : cancelarTimeout()
+        CL --> U : exibe mensagem de erro
+    end
+end
+@enduml
+
+' ───────────────────────────────────────────────────────────────────
+' SEQUÊNCIA 2 — Envio e Recebimento de Mensagem
+' ───────────────────────────────────────────────────────────────────
+@startuml sequencia_chat
+title ZapIF — Fluxo de Envio e Recebimento de Mensagem
+
+skinparam Shadowing false
+skinparam SequenceArrowThickness 1.5
+skinparam SequenceBoxBackgroundColor #F8FAFC
+skinparam SequenceBoxBorderColor #94A3B8
+skinparam ActorBackgroundColor #F0FDF4
+skinparam ActorBorderColor #16A34A
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #3B82F6
+skinparam ArrowColor #475569
+skinparam NoteBackgroundColor #FEFCE8
+skinparam NoteBorderColor #CA8A04
+
+actor       "Pedro"              as A
+participant "ControladorChat\n(Pedro)" as CCA
+participant "Conexao\n(Pedro)"   as CNA
+participant "ManipuladorCliente" as MC
+participant "Sala"               as S
+participant "Conexao\n(Bob)"     as CNB
+participant "ControladorChat\n(Bob)" as CCB
+actor       "Bob"                as B
+
+A   -> CCA : digita texto + Enter
+CCA -> CNA : enviar("MSG|geral|Pedro|olá mundo")
+CNA -> MC  : [TCP] "MSG|geral|Pedro|olá mundo"
+
+MC  -> MC  : sanitizar(texto)
+MC  -> MC  : BancoDados.salvarMensagem()
+note right of MC : persiste antes\ndo broadcast
+
+MC  -> S   : transmitir("MSG|geral|Pedro|olá mundo", excluir=null)
+
+S   -> CNA : enviarMensagem(msg)
+S   -> CNB : enviarMensagem(msg)
+
+CNA -> CCA : aoReceberMensagem(msg)
+CCA -> CCA : adicionarLinha("[HH:mm] Pedro: olá mundo")
+CCA -> CCA : rolarParaBaixo()
+
+CNB -> CCB : aoReceberMensagem(msg)
+CCB -> CCB : adicionarLinha("[HH:mm] Pedro: olá mundo")
+CCB -> B   : mensagem aparece na ListView
+@enduml
+
+' ───────────────────────────────────────────────────────────────────
+' SEQUÊNCIA 3 — Heartbeat PING / PONG
+' ───────────────────────────────────────────────────────────────────
+@startuml sequencia_heartbeat
+title ZapIF — Fluxo de Heartbeat (PING / PONG)
+
+skinparam Shadowing false
+skinparam SequenceArrowThickness 1.5
+skinparam SequenceBoxBackgroundColor #F8FAFC
+skinparam SequenceBoxBorderColor #94A3B8
+skinparam ParticipantBackgroundColor #EFF6FF
+skinparam ParticipantBorderColor #3B82F6
+skinparam ArrowColor #475569
+skinparam NoteBackgroundColor #FEFCE8
+skinparam NoteBorderColor #CA8A04
+
+participant "ManipuladorCliente" as MC
+participant "Conexao"            as CN
+
+MC -> MC : iniciarHeartbeat()\na cada 20 s
+MC -> CN : "PING"
+
+CN -> CN : loopLeitura detecta "PING"
+CN -> MC : "PONG"
+note right of MC : SO_TIMEOUT resetado\n(janela de 45 s)
+
+alt cliente não responde dentro de 45 s
+    MC -> MC : SocketTimeoutException
+    MC -> MC : limpar()
+    MC -> MC : RegistroSessao.desregistrar(nome)
+    CN -> CN : agendarRetry() — 5 s
+end
+@enduml

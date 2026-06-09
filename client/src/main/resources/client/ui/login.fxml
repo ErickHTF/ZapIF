@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="client.ui.ControladorLogin"
+      stylesheets="@style.css"
+      alignment="CENTER" spacing="12"
+      prefWidth="360" prefHeight="420"
+      style="-fx-background-color: #1e1e2e;">
+    <padding><Insets top="48" right="48" bottom="48" left="48"/></padding>
+
+    <Label text="ZapIF"
+           style="-fx-text-fill: #cdd6f4; -fx-font-size: 28px; -fx-font-weight: bold;"/>
+
+    <Label text="Bem-vindo de volta"
+           style="-fx-text-fill: #6c7086; -fx-font-size: 12px;"/>
+
+    <VBox spacing="8">
+        <TextField fx:id="campoUsuario" promptText="Nome de usuário"/>
+        <PasswordField fx:id="campoSenha" promptText="Senha"/>
+    </VBox>
+
+    <HBox spacing="8">
+        <Button fx:id="botaoLogin" text="Entrar" onAction="#aoFazerLogin"
+                styleClass="button,primary"
+                maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+        <Button fx:id="botaoCadastro" text="Cadastrar" onAction="#aoRegistrar"
+                maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+    </HBox>
+
+    <Label fx:id="labelStatus" text="Conectando..."
+           style="-fx-text-fill: #585b70; -fx-font-size: 11px;"/>
+</VBox>

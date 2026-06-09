@@ -1,0 +1,104 @@
+@startuml diagrama_pacotes
+title ZapIF — Diagrama de Pacotes e Arquitetura
+
+skinparam Shadowing false
+skinparam linetype ortho
+skinparam ArrowColor #475569
+skinparam ArrowThickness 1.2
+
+skinparam package {
+    BackgroundColor     #FAFAFA
+    BorderColor         #94A3B8
+    FontSize            13
+    FontStyle           bold
+}
+skinparam component {
+    BackgroundColor     #F8FAFC
+    BorderColor         #475569
+    FontSize            12
+}
+skinparam database {
+    BackgroundColor     #FFF7ED
+    BorderColor         #EA580C
+    FontSize            12
+}
+skinparam node {
+    BackgroundColor     #F0F9FF
+    BorderColor         #0284C7
+    FontSize            13
+}
+
+' ═══════════════════════════════════════════════════════
+' LADO CLIENTE
+' ═══════════════════════════════════════════════════════
+node "Máquina do Usuário\n(JavaFX Desktop)" as MaquinaCliente {
+
+    package "client" {
+
+        package "client.ui" {
+            [ControladorLogin]
+            [ControladorChat]
+        }
+
+        package "client.network" {
+            [Conexao]
+            [OuvinteMensagem]
+            [OuvinteStatusConexao]
+        }
+
+        package "client.model" {
+            [Mensagem]
+            [Usuario]
+        }
+
+        [Main]
+    }
+}
+
+' ═══════════════════════════════════════════════════════
+' LADO SERVIDOR
+' ═══════════════════════════════════════════════════════
+node "Servidor\n(Java SE — processo único)" as MaquinaServidor {
+
+    package "server" {
+        [Servidor]
+        [ManipuladorCliente]
+        [Sala]
+        [RegistroSessao]
+        [BancoDados]
+    }
+
+    database "SQLite\nchat.db" as DB {
+        [usuarios]
+        [salas]
+        [mensagens]
+    }
+}
+
+' ═══════════════════════════════════════════════════════
+' DEPENDÊNCIAS INTERNAS — CLIENTE
+' ═══════════════════════════════════════════════════════
+[Main]             --> [Conexao]              : cria
+[ControladorLogin] --> [Conexao]              : usa
+[ControladorChat]  --> [Conexao]              : usa
+[ControladorLogin] ..> [ControladorChat]      : abre
+[ControladorChat]  ..> [Mensagem]             : instancia
+[Conexao]          ..> [OuvinteMensagem]      : notifica
+[Conexao]          ..> [OuvinteStatusConexao] : notifica
+
+' ═══════════════════════════════════════════════════════
+' DEPENDÊNCIAS INTERNAS — SERVIDOR
+' ═══════════════════════════════════════════════════════
+[Servidor]           --> [ManipuladorCliente] : submete ao pool
+[ManipuladorCliente] --> [Sala]              : entra / sai
+[ManipuladorCliente] --> [BancoDados]        : persiste / consulta
+[ManipuladorCliente] --> [RegistroSessao]    : registra / libera
+[Sala]               --> [ManipuladorCliente] : broadcast
+[BancoDados]         --> DB                  : JDBC
+
+' ═══════════════════════════════════════════════════════
+' COMUNICAÇÃO ENTRE CLIENTE E SERVIDOR
+' ═══════════════════════════════════════════════════════
+[Conexao] <--> [ManipuladorCliente] : TCP Socket · porta 5001\nprotocolo texto separado por "|"
+
+@enduml

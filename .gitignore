@@ -1,0 +1,27 @@
+# Compilados Maven
+target/
+*.jar
+*.war
+*.class
+
+# Banco de dados SQLite (gerado em runtime)
+*.db
+*.db-shm
+*.db-wal
+
+# Maven Wrapper jar (baixado automaticamente)
+.mvn/wrapper/maven-wrapper.jar
+
+# IDEs
+.idea/
+*.iml
+*.iws
+.vscode/
+*.class
+
+# SO
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

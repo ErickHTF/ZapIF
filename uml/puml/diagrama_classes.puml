@@ -1,0 +1,274 @@
+@startuml diagrama_classes
+title ZapIF — Diagrama de Classes
+
+skinparam classAttributeIconSize 0
+skinparam groupInheritance 2
+skinparam Shadowing false
+skinparam linetype ortho
+
+skinparam class {
+    BackgroundColor     #F8FAFC
+    BorderColor         #475569
+    HeaderBackgroundColor #E2E8F0
+    FontSize            13
+    AttributeFontSize   12
+}
+skinparam interface {
+    BackgroundColor     #EFF6FF
+    BorderColor         #3B82F6
+    HeaderBackgroundColor #DBEAFE
+}
+skinparam enum {
+    BackgroundColor     #FFF7ED
+    BorderColor         #EA580C
+    HeaderBackgroundColor #FFEDD5
+}
+skinparam package {
+    BackgroundColor #FAFAFA
+    BorderColor     #CBD5E1
+    FontSize        14
+    FontStyle       bold
+}
+skinparam ArrowColor #475569
+skinparam ArrowThickness 1.2
+
+' ═══════════════════════════════════════════════════════
+' CLIENTE
+' ═══════════════════════════════════════════════════════
+package "client" {
+
+    class Main <<Aplicação>> {
+        - {static} conexao : Conexao
+        --
+        + start(palco : Stage) : void
+        + stop() : void
+        + {static} getConexao() : Conexao
+        + {static} main(args : String[]) : void
+    }
+
+    ' ── model ───────────────────────────────────────────
+    package "model" {
+
+        class Mensagem {
+            - {static} FORMATO : DateTimeFormatter
+            - remetente : String
+            - texto     : String
+            - hora      : String
+            --
+            + Mensagem(remetente : String, texto : String)
+            + getRemetente() : String
+            + getTexto()     : String
+            + toString()     : String
+        }
+
+        class Usuario {
+            - nome : String
+            --
+            + Usuario(nome : String)
+            + getNome() : String
+        }
+    }
+
+    ' ── network ─────────────────────────────────────────
+    package "network" {
+
+        interface OuvinteMensagem {
+            + aoReceberMensagem(mensagem : String) : void
+        }
+
+        interface OuvinteStatusConexao {
+            + aoMudarStatus(status : Conexao.Status) : void
+        }
+
+        enum "Conexao.Status" as Status {
+            CONECTANDO
+            CONECTADO
+            DESCONECTADO
+        }
+
+        class Conexao {
+            - {static} HOST               : String
+            - {static} PORTA              : int
+            - {static} SEGUNDOS_RETRY     : int
+            - {static} TIMEOUT_LEITURA_MS : int
+            ..
+            - ouvintesMensagem : List<OuvinteMensagem>
+            - ouvintesStatus   : List<OuvinteStatusConexao>
+            - agendador        : ScheduledExecutorService
+            - socket           : Socket
+            - saida            : PrintWriter
+            - ativo            : boolean
+            --
+            + Conexao()
+            + enviar(mensagem : String) : void
+            + adicionarOuvinteMensagem(l : OuvinteMensagem) : void
+            + removerOuvinteMensagem(l : OuvinteMensagem) : void
+            + adicionarOuvinteStatus(l : OuvinteStatusConexao) : void
+            + removerOuvinteStatus(l : OuvinteStatusConexao) : void
+            + desconectar() : void
+            - conectarAsync() : void
+            - conectar() : void
+            - loopLeitura(entrada : BufferedReader) : void
+            - agendarRetry() : void
+            - fecharSocket() : void
+            - notificarStatus(status : Status) : void
+        }
+
+        Conexao +-- Status
+        Conexao o-- "0..*" OuvinteMensagem      : notifica >
+        Conexao o-- "0..*" OuvinteStatusConexao : notifica >
+    }
+
+    ' ── ui ──────────────────────────────────────────────
+    package "ui" {
+
+        class ControladorLogin {
+            - {static} SEGUNDOS_TIMEOUT : int
+            ..
+            - campoUsuario    : TextField
+            - campoSenha      : PasswordField
+            - labelStatus     : Label
+            - botaoLogin      : Button
+            - botaoCadastro   : Button
+            ..
+            - conexao         : Conexao
+            - agendador       : ScheduledExecutorService
+            - timeoutPendente : ScheduledFuture<?>
+            --
+            + initialize() : void
+            + aoFazerLogin() : void
+            + aoRegistrar() : void
+            + aoReceberMensagem(mensagem : String) : void
+            - abrirChat(nomeUsuario : String, salas : String[]) : void
+            - {static} validar(nome : String, senha : String) : String
+            - agendarTimeout() : void
+            - cancelarTimeout() : void
+            - definirStatus(texto : String, habilitar : boolean) : void
+            - definirOcupado(ocupado : boolean) : void
+        }
+
+        class ControladorChat {
+            - listaSalas     : ListView<String>
+            - listaMensagens : ListView<String>
+            - campoMensagem  : TextField
+            - botaoEnviar    : Button
+            - bannerOffline  : HBox
+            ..
+            - conexao     : Conexao
+            - nomeUsuario : String
+            - salaAtual   : String
+            --
+            + initialize() : void
+            + configurar(nomeUsuario : String, salas : String[]) : void
+            - entrarNaSala(sala : String) : void
+            + aoEnviar() : void
+            + aoPresionarTecla(e : KeyEvent) : void
+            + aoReceberMensagem(mensagem : String) : void
+            - adicionarLinha(linha : String) : void
+            - rolarParaBaixo() : void
+        }
+    }
+}
+
+' ═══════════════════════════════════════════════════════
+' SERVIDOR
+' ═══════════════════════════════════════════════════════
+package "server" {
+
+    class Servidor {
+        - {static} PORTA        : int
+        - {static} MAX_CLIENTES : int
+        --
+        + {static} main(args : String[]) : void
+    }
+
+    class ManipuladorCliente <<Runnable>> {
+        - {static} MAX_NOME_USUARIO   : int
+        - {static} MIN_NOME_USUARIO   : int
+        - {static} MAX_TEXTO          : int
+        - {static} TIMEOUT_LEITURA_MS : int
+        - {static} INTERVALO_PING_S   : int
+        ..
+        - socket        : Socket
+        - saida         : PrintWriter
+        - nomeUsuario   : String
+        - salaAtual     : Sala
+        - agendadorPing : ScheduledExecutorService
+        - tarefaPing    : ScheduledFuture<?>
+        --
+        + ManipuladorCliente(socket : Socket)
+        + run() : void
+        + enviarMensagem(mensagem : String) : void
+        - processarMensagem(bruto : String) : void
+        - processarRegistro(partes : String[]) : void
+        - processarLogin(partes : String[]) : void
+        - processarEntradaSala(partes : String[]) : void
+        - processarMensagemChat(partes : String[]) : void
+        - iniciarHeartbeat() : void
+        - limpar() : void
+        - {static} validarNomeUsuario(nome : String) : String
+        - {static} sanitizar(s : String, max : int) : String
+    }
+
+    class BancoDados {
+        - {static} URL_BANCO   : String
+        - {static} ITER_PBKDF2 : int
+        - {static} BYTES_SALT  : int
+        - {static} BITS_HASH   : int
+        --
+        + {static} inicializar() : void
+        + {static} registrar(nome : String, senha : String) : boolean
+        + {static} autenticar(nome : String, senha : String) : boolean
+        + {static} salaExiste(nome : String) : boolean
+        + {static} obterSalas() : List<String>
+        + {static} obterHistorico(sala : String, limite : int) : List<String>
+        + {static} salvarMensagem(sala : String, usuario : String, texto : String) : void
+        - {static} conectar() : Connection
+        - {static} gerarSalt() : String
+        - {static} pbkdf2(senha : String, saltB64 : String) : String
+    }
+
+    class Sala {
+        - nome     : String
+        - clientes : CopyOnWriteArrayList<ManipuladorCliente>
+        - {static} salas : Map<String, Sala>
+        --
+        - Sala(nome : String)
+        + {static} obterOuCriar(nome : String) : Sala
+        + adicionarCliente(cliente : ManipuladorCliente) : void
+        + removerCliente(cliente : ManipuladorCliente) : void
+        + transmitir(mensagem : String, excluir : ManipuladorCliente) : void
+        + getNome() : String
+    }
+
+    class RegistroSessao {
+        - {static} online : Set<String>
+        --
+        + {static} tentarRegistrar(nomeUsuario : String) : boolean
+        + {static} desregistrar(nomeUsuario : String) : void
+    }
+}
+
+' ═══════════════════════════════════════════════════════
+' RELACIONAMENTOS
+' ═══════════════════════════════════════════════════════
+
+' Interfaces implementadas
+ControladorLogin ..|> OuvinteMensagem
+ControladorChat  ..|> OuvinteMensagem
+
+' Cliente — composição e dependências
+Main             "1" *--  "1"    Conexao          : gerencia
+ControladorLogin "1" -->  "1"    Conexao          : usa
+ControladorChat  "1" -->  "1"    Conexao          : usa
+ControladorLogin       ..>       ControladorChat  : abre >
+ControladorChat        ..>       Mensagem         : cria >
+
+' Servidor — composição e dependências
+Servidor         "1" *-- "0..*"  ManipuladorCliente : cria threads >
+ManipuladorCliente "1" -->  "1"  Sala               : participa >
+ManipuladorCliente      ..>      BancoDados         : consulta/persiste >
+ManipuladorCliente      ..>      RegistroSessao     : registra/libera >
+Sala             "1" o-- "0..*"  ManipuladorCliente : contém >
+
+@enduml
