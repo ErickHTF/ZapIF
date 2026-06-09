@@ -1,4 +1,7 @@
-# Chat em Tempo Real — JavaFX + Socket
+# ZapIF — Chat em Tempo Real com JavaFX + Socket
+
+> Projeto desenvolvido para a disciplina de **Linguagem de Programação 1**.
+> O objetivo é explorar na prática o funcionamento de **threads**, **conexões via socket TCP** e **interfaces gráficas com JavaFX**, integrando esses conceitos em uma aplicação completa de chat cliente-servidor.
 
 Sistema de chat cliente-servidor via TCP. O servidor roda como processo único e os clientes conectam via JavaFX desktop.
 
@@ -203,4 +206,3 @@ Criadas automaticamente se não existirem:
 | PBKDF2 + salt no hash | resistência a rainbow tables sem dependência extra |
 | Platform.runLater() centralizado em Connection | controllers não precisam conhecer threading |
 | Split com limite no parser (`split("\\|", 4)`) | campo de texto pode conter `\|` sem quebrar |
-"# ZapIF" 

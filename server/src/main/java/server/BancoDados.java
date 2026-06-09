@@ -4,6 +4,9 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.security.SecureRandom;
 import java.sql.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -109,11 +112,15 @@ public class BancoDados {
         return lista;
     }
 
+    private static final DateTimeFormatter FMT_DB   = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter FMT_HORA = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter FMT_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     public static List<String> obterHistorico(String sala, int limite) {
         List<String> msgs = new ArrayList<>();
         String sql = """
-            SELECT usuario, texto FROM (
-                SELECT id, usuario, texto FROM mensagens
+            SELECT usuario, texto, timestamp FROM (
+                SELECT id, usuario, texto, timestamp FROM mensagens
                 WHERE sala_nome = ? ORDER BY id DESC LIMIT ?
             ) ORDER BY id ASC
         """;
@@ -122,14 +129,30 @@ public class BancoDados {
             ps.setString(1, sala);
             ps.setInt(2, limite);
             try (ResultSet rs = ps.executeQuery()) {
+                LocalDate dataAtual = null;
                 while (rs.next()) {
-                    msgs.add(rs.getString("usuario") + ": " + rs.getString("texto"));
+                    LocalDateTime ldt = LocalDateTime.parse(rs.getString("timestamp"), FMT_DB);
+                    LocalDate data = ldt.toLocalDate();
+                    if (!data.equals(dataAtual)) {
+                        dataAtual = data;
+                        msgs.add(separadorData(data));
+                    }
+                    msgs.add("[" + ldt.format(FMT_HORA) + "] "
+                            + rs.getString("usuario") + ": " + rs.getString("texto"));
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return msgs;
+    }
+
+    private static String separadorData(LocalDate data) {
+        LocalDate hoje = LocalDate.now();
+        String label = data.equals(hoje)            ? "Hoje"
+                     : data.equals(hoje.minusDays(1)) ? "Ontem"
+                     : data.format(FMT_DATA);
+        return "── " + label + " ──";
     }
 
     public static void salvarMensagem(String sala, String usuario, String texto) {

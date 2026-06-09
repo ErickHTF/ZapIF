@@ -14,4 +14,8 @@ public class RegistroSessao {
     public static void desregistrar(String nomeUsuario) {
         if (nomeUsuario != null) online.remove(nomeUsuario);
     }
+
+    public static int totalOnline() {
+        return online.size();
+    }
 }
