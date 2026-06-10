@@ -22,6 +22,7 @@ public class ControladorLogin implements OuvinteMensagem {
     @FXML private TextField     campoUsuario;
     @FXML private PasswordField campoSenha;
     @FXML private Label         labelStatus;
+    @FXML private Label         labelServidor;
     @FXML private Button        botaoLogin;
     @FXML private Button        botaoCadastro;
 
@@ -42,11 +43,11 @@ public class ControladorLogin implements OuvinteMensagem {
 
         conexao.adicionarOuvinteStatus(status -> {
             switch (status) {
-                case CONECTANDO   -> definirStatus("Conectando...", false);
-                case CONECTADO    -> definirStatus("Conectado", true);
+                case CONECTANDO   -> atualizarServidor("Serviço: conectando...", "servidor-conectando", false);
+                case CONECTADO    -> atualizarServidor("Serviço: Online", "servidor-online", true);
                 case DESCONECTADO -> {
                     cancelarTimeout();
-                    definirStatus("Sem conexão — tentando reconectar...", false);
+                    atualizarServidor("Serviço: sem conexão — reconectando...", "servidor-offline", false);
                 }
             }
         });
@@ -144,6 +145,15 @@ public class ControladorLogin implements OuvinteMensagem {
             timeoutPendente.cancel(false);
             timeoutPendente = null;
         }
+    }
+
+    private void atualizarServidor(String texto, String styleClass, boolean habilitarBotoes) {
+        Platform.runLater(() -> {
+            labelServidor.getStyleClass().removeAll("servidor-conectando", "servidor-online", "servidor-offline");
+            labelServidor.getStyleClass().add(styleClass);
+            labelServidor.setText(texto);
+            definirOcupado(!habilitarBotoes);
+        });
     }
 
     private void definirStatus(String texto, boolean habilitarBotoes) {
