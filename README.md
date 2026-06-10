@@ -11,6 +11,14 @@ Cliente A ──── TCP ───► Servidor (porta 5000) ◄──── TC
 
 ---
 
+## Screenshots
+
+| Login | Home | Sala de Chat |
+|:---:|:---:|:---:|
+| ![Login](docs/screenshots/login.png) | ![Home](docs/screenshots/home.png) | ![Sala](docs/screenshots/salas.png) |
+
+---
+
 ## Estrutura
 
 ```
