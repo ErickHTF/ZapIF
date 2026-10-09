@@ -25,3 +25,6 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Gerado pelo maven-shade-plugin
+dependency-reduced-pom.xml
