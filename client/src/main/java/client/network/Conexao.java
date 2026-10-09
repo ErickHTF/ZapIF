@@ -15,8 +15,9 @@ public class Conexao {
 
     public enum Status { CONECTANDO, CONECTADO, DESCONECTADO }
 
-    static final String HOST               = "localhost";
-    static final int    PORTA              = 5001;
+    // Configuráveis sem recompilar: -Dzapif.host / -Dzapif.port ou ZAPIF_HOST / ZAPIF_PORT
+    static final String HOST               = configuracao("zapif.host", "ZAPIF_HOST", "localhost");
+    static final int    PORTA              = Integer.parseInt(configuracao("zapif.port", "ZAPIF_PORT", "5001"));
     static final int    SEGUNDOS_RETRY     = 5;
     static final int    TIMEOUT_LEITURA_MS = 60_000;
 
@@ -114,6 +115,12 @@ public class Conexao {
             socket = null;
             saida  = null;
         }
+    }
+
+    private static String configuracao(String propriedade, String variavelAmbiente, String padrao) {
+        String valor = System.getProperty(propriedade);
+        if (valor == null || valor.isBlank()) valor = System.getenv(variavelAmbiente);
+        return (valor == null || valor.isBlank()) ? padrao : valor.trim();
     }
 
     private void notificarStatus(Status status) {
