@@ -15,7 +15,7 @@ ZapIF is a real-time chat system built on a TCP client-server architecture. The 
 | Element | Type | Description |
 |---|---|---|
 | "Usuário:" (Username) field | TextField | 3–24 characters, no `\|` |
-| "Senha:" (Password) field | PasswordField | 6–64 characters (the client checks the minimum, the server enforces both) |
+| "Senha:" (Password) field | PasswordField | 6–64 characters (the client checks the minimum; the server enforces both on sign-up) |
 | "Entrar" (Log in) button | Button | Sends `LOGIN\|name\|password` to the server |
 | "Cadastrar" (Sign up) button | Button | Sends `REGISTER\|name\|password` to the server |
 | Status label | Label | Shows validation errors and server feedback |
@@ -39,7 +39,7 @@ ZapIF is a real-time chat system built on a TCP client-server architecture. The 
 | Username + "(Online)" | Label | Logged-in user's name at the top of the sidebar |
 | Online counter | Label | "● n online" — total users logged in on the server (from `ONLINE`) |
 | "SALAS" (Rooms) header | HBox | Click collapses/expands the room list (▼ / ▶) |
-| Room list | ListView | Shows the available rooms with the number of users in each (`[n]`); clicking a room joins it |
+| Room list | ListView | Shows the available rooms with the number of users in each (`[n]`, only for rooms someone has joined since the server started); clicking a room joins it |
 | "< Início" (Home) button | Button | Leaves the current room (`LEAVE\|room`) and returns to the welcome panel |
 | Welcome panel | VBox | "Selecione uma sala para começar a conversar." (Select a room to start chatting.) — shown until a room is selected |
 | Message list | ListView | Shows the history and real-time messages of the active room |
@@ -155,7 +155,7 @@ Plain text separated by `|`, one message per line (`\n`).
 | `PONG` | client → server | Heartbeat reply |
 | `OK\|context` | server → client | Acknowledgement (REGISTER, LOGIN) |
 | `ROOMS\|room1,room2,...` | server → client | Room list after login |
-| `ONLINE\|total\|room1:n,room2:n,...` | server → client | Online users and per-room count (after login and on every join/leave/disconnect) |
+| `ONLINE\|total\|room1:n,room2:n,...` | server → client | Online users and per-room count (sent to that client after login, and broadcast on every join/leave/disconnect) |
 | `HISTORY\|room\|msg1\|...` | server → client | Last 50 messages when joining a room (`[HH:mm] name: text`, with date separators) |
 | `PING` | server → client | Heartbeat every 20 s after login |
 | `ERROR\|reason` | server → client | Descriptive error |

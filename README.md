@@ -165,7 +165,7 @@ Plain text, one message per line, fields separated by `|`. Lines longer than 409
 | `MSG\|room\|name\|text` | both | Send/receive a message — the server uses the authenticated username, not the one sent |
 | `PONG` | client → server | Reply to `PING` |
 | `ROOMS\|room1,room2,...` | server → client | Room list after login |
-| `ONLINE\|total\|room1:n,room2:n,...` | server → client | Online users and per-room count (after login and on every join/leave/disconnect) |
+| `ONLINE\|total\|room1:n,room2:n,...` | server → client | Online users and per-room count (sent to that client after login, and broadcast on every join/leave/disconnect) |
 | `HISTORY\|room\|msg1\|msg2\|...` | server → client | Last 50 messages when joining a room (`[HH:mm] name: text`, with date separators) |
 | `PING` | server → client | Heartbeat every 20 s after login |
 | `OK\|context` | server → client | Acknowledgement (`OK\|REGISTER`, `OK\|LOGIN`) |
