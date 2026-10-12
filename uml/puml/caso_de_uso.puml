@@ -34,6 +34,8 @@ rectangle "ZapIF" {
     usecase "View available rooms"         as UC03
     usecase "Join room"                    as UC04
     usecase "Switch rooms"                 as UC08
+    usecase "Leave room"                   as UC15
+    usecase "View online users"            as UC16
 
     ' Post-login — messages
     usecase "Send message"                   as UC05
@@ -63,6 +65,8 @@ Autenticado --> UC06
 Autenticado --> UC07
 Autenticado --> UC08
 Autenticado --> UC09
+Autenticado --> UC15
+Autenticado --> UC16
 
 ' ── Include (mandatory behavior) ─────────────────────────────────
 UC02 ..> UC10 : <<include>>

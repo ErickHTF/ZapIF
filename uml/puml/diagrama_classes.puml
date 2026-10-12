@@ -111,6 +111,7 @@ package "client" {
             - loopLeitura(entrada : BufferedReader) : void
             - agendarRetry() : void
             - fecharSocket() : void
+            - {static} configuracao(propriedade : String, variavelAmbiente : String, padrao : String) : String
             - notificarStatus(status : Status) : void
         }
 
@@ -128,6 +129,7 @@ package "client" {
             - campoUsuario    : TextField
             - campoSenha      : PasswordField
             - labelStatus     : Label
+            - labelServidor   : Label
             - botaoLogin      : Button
             - botaoCadastro   : Button
             ..
@@ -136,13 +138,14 @@ package "client" {
             - timeoutPendente : ScheduledFuture<?>
             --
             + initialize() : void
-            + aoFazerLogin() : void
-            + aoRegistrar() : void
+            - aoFazerLogin() : void
+            - aoRegistrar() : void
             + aoReceberMensagem(mensagem : String) : void
             - abrirChat(nomeUsuario : String, salas : String[]) : void
             - {static} validar(nome : String, senha : String) : String
             - agendarTimeout() : void
             - cancelarTimeout() : void
+            - atualizarServidor(texto : String, styleClass : String, habilitarBotoes : boolean) : void
             - definirStatus(texto : String, habilitar : boolean) : void
             - definirOcupado(ocupado : boolean) : void
         }
@@ -153,16 +156,27 @@ package "client" {
             - campoMensagem  : TextField
             - botaoEnviar    : Button
             - bannerOffline  : HBox
+            - painelBemVindo : VBox
+            - painelChat     : VBox
+            - labelTotalOnline : Label
+            - labelNomeUsuario : Label
+            - labelSetaSalas   : Label
+            - labelSalas       : Label
             ..
+            - salasExpandidas : boolean
+            - suprimirSelecao : boolean
             - conexao     : Conexao
             - nomeUsuario : String
             - salaAtual   : String
+            - contagemPorSala : Map<String, Integer>
             --
             + initialize() : void
             + configurar(nomeUsuario : String, salas : String[]) : void
             - entrarNaSala(sala : String) : void
-            + aoEnviar() : void
-            + aoPresionarTecla(e : KeyEvent) : void
+            - aoAlternarSalas() : void
+            - aoClicarInicio() : void
+            - aoEnviar() : void
+            - aoPresionarTecla(e : KeyEvent) : void
             + aoReceberMensagem(mensagem : String) : void
             - adicionarLinha(linha : String) : void
             - rolarParaBaixo() : void
@@ -188,6 +202,7 @@ package "server" {
         - {static} MAX_TEXTO          : int
         - {static} TIMEOUT_LEITURA_MS : int
         - {static} INTERVALO_PING_S   : int
+        - {static} todosClientes      : Set<ManipuladorCliente>
         ..
         - socket        : Socket
         - saida         : PrintWriter
@@ -199,10 +214,12 @@ package "server" {
         + ManipuladorCliente(socket : Socket)
         + run() : void
         + enviarMensagem(mensagem : String) : void
+        ~ {static} transmitirOnlineParaTodos() : void
         - processarMensagem(bruto : String) : void
         - processarRegistro(partes : String[]) : void
         - processarLogin(partes : String[]) : void
         - processarEntradaSala(partes : String[]) : void
+        - processarSaidaSala() : void
         - processarMensagemChat(partes : String[]) : void
         - iniciarHeartbeat() : void
         - limpar() : void
@@ -215,6 +232,9 @@ package "server" {
         - {static} ITER_PBKDF2 : int
         - {static} BYTES_SALT  : int
         - {static} BITS_HASH   : int
+        - {static} FMT_DB      : DateTimeFormatter
+        - {static} FMT_HORA    : DateTimeFormatter
+        - {static} FMT_DATA    : DateTimeFormatter
         --
         + {static} inicializar() : void
         + {static} registrar(nome : String, senha : String) : boolean
@@ -223,6 +243,7 @@ package "server" {
         + {static} obterSalas() : List<String>
         + {static} obterHistorico(sala : String, limite : int) : List<String>
         + {static} salvarMensagem(sala : String, usuario : String, texto : String) : void
+        - {static} separadorData(data : LocalDate) : String
         - {static} conectar() : Connection
         - {static} gerarSalt() : String
         - {static} pbkdf2(senha : String, saltB64 : String) : String
@@ -239,6 +260,8 @@ package "server" {
         + removerCliente(cliente : ManipuladorCliente) : void
         + transmitir(mensagem : String, excluir : ManipuladorCliente) : void
         + getNome() : String
+        + getContagem() : int
+        + {static} construirContagens() : String
     }
 
     class RegistroSessao {
@@ -246,6 +269,7 @@ package "server" {
         --
         + {static} tentarRegistrar(nomeUsuario : String) : boolean
         + {static} desregistrar(nomeUsuario : String) : void
+        + {static} totalOnline() : int
     }
 }
 
@@ -266,7 +290,7 @@ ControladorChat        ..>       Mensagem         : creates >
 
 ' Server — composition and dependencies
 Servidor         "1" *-- "0..*"  ManipuladorCliente : spawns threads >
-ManipuladorCliente "1" -->  "1"  Sala               : joins >
+ManipuladorCliente "1" -->  "0..1" Sala             : joins >
 ManipuladorCliente      ..>      BancoDados         : queries/persists >
 ManipuladorCliente      ..>      RegistroSessao     : registers/releases >
 Sala             "1" o-- "0..*"  ManipuladorCliente : contains >

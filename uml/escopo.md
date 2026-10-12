@@ -14,18 +14,19 @@ ZapIF is a real-time chat system built on a TCP client-server architecture. The 
 
 | Element | Type | Description |
 |---|---|---|
-| "Nome de usuário" (Username) field | TextField | 3–24 characters, no `\|` |
-| "Senha" (Password) field | PasswordField | 6–64 characters |
+| "Usuário:" (Username) field | TextField | 3–24 characters, no `\|` |
+| "Senha:" (Password) field | PasswordField | 6–64 characters (the client checks the minimum, the server enforces both) |
 | "Entrar" (Log in) button | Button | Sends `LOGIN\|name\|password` to the server |
 | "Cadastrar" (Sign up) button | Button | Sends `REGISTER\|name\|password` to the server |
-| Status label | Label | Shows validation errors, connection state and server feedback |
+| Status label | Label | Shows validation errors and server feedback |
+| Service label (bottom right) | Label | Shows the connection state: "Serviço: conectando..." (Service: connecting...), "Serviço: Online" (Service: Online) or "Serviço: sem conexão — reconectando..." (Service: no connection — reconnecting...) |
 
 **Flows:**
 - Successful sign-up → label shows "Cadastro realizado! Faça login" (Signed up! Please log in)
-- Successful login → automatic transition to Screen 2
-- Error (invalid credentials, user already exists) → label shows the error message
-- No connection → buttons disabled, label shows "Sem conexão — tentando reconectar..." (No connection — trying to reconnect...)
-- 10 s timeout with no response → label shows a warning and re-enables the buttons
+- Successful login → automatic transition to Screen 2 (when the `ROOMS` list arrives)
+- Error (invalid credentials, user already exists, user already logged in elsewhere) → label shows the error message sent by the server
+- Connecting or no connection → buttons disabled; the service label shows "Serviço: conectando..." or "Serviço: sem conexão — reconectando..."; buttons are re-enabled once it shows "Serviço: Online"
+- 10 s timeout with no response → label shows "Servidor não respondeu — tente novamente" (Server did not respond — try again) and re-enables the buttons
 
 ---
 
@@ -35,18 +36,25 @@ ZapIF is a real-time chat system built on a TCP client-server architecture. The 
 
 | Element | Type | Description |
 |---|---|---|
-| Room list | ListView | Shows the available rooms; clicking switches rooms |
+| Username + "(Online)" | Label | Logged-in user's name at the top of the sidebar |
+| Online counter | Label | "● n online" — total users logged in on the server (from `ONLINE`) |
+| "SALAS" (Rooms) header | HBox | Click collapses/expands the room list (▼ / ▶) |
+| Room list | ListView | Shows the available rooms with the number of users in each (`[n]`); clicking a room joins it |
+| "< Início" (Home) button | Button | Leaves the current room (`LEAVE\|room`) and returns to the welcome panel |
+| Welcome panel | VBox | "Selecione uma sala para começar a conversar." (Select a room to start chatting.) — shown until a room is selected |
 | Message list | ListView | Shows the history and real-time messages of the active room |
-| Message field | TextField | Text to send; `Enter` or the button sends it |
+| Message field | TextField | "Mensagem..." (Message...) placeholder; `Enter` or the button sends it |
 | "Enviar" (Send) button | Button | Sends `MSG\|room\|user\|text` |
-| Offline banner | HBox (red) | Appears when the connection drops; disappears on reconnect |
+| Offline banner | HBox (red) | "Sem conexão — reconectando..." (No connection — reconnecting...); appears when the connection drops, disappears on reconnect |
 
 **Flows:**
-- On entering the screen → room 0 selected automatically, history loaded
-- Switching rooms → message list cleared, new history loaded
-- Message received → appended to the end of the list, auto-scroll to the bottom
+- On entering the screen → welcome panel shown, no room joined; the user picks a room from the list
+- Selecting a room → message list cleared, chat area shown, `JOIN|room` sent, history loaded
+- Switching rooms → message list cleared, new history loaded (the server removes the user from the previous room)
+- Clicking "< Início" (Home) → `LEAVE|room` sent, message list cleared, welcome panel shown again
+- Message received → appended to the end of the list, auto-scroll to the bottom (join/leave notices from the server are not displayed)
 - Connection drops → red banner appears, field and button disabled
-- Reconnection → banner disappears, field and button re-enabled
+- Reconnection → banner disappears, field and button re-enabled; the session is not restored (no new `LOGIN`/`JOIN` is sent), so the server rejects messages until the user restarts the client and logs in again
 
 ---
 
@@ -66,8 +74,10 @@ ZapIF is a real-time chat system built on a TCP client-server architecture. The 
 | UC10 | Validate credentials | Server | Checks name/password with PBKDF2 against the database |
 | UC11 | Persist message | Server | Saves the message to SQLite before broadcasting |
 | UC12 | Broadcast message | Server | Sends the message to everyone in the room |
-| UC13 | PING/PONG heartbeat | Server | Detects idle clients every 20 s |
+| UC13 | PING/PONG heartbeat | Server | Sends PING every 20 s; drops clients silent for 45 s |
 | UC14 | Reconnect automatically | Client | Retries connecting to the server every 5 s after a drop |
+| UC15 | Leave room | Authenticated user | Clicks "< Início" (Home) to leave the current room and return to the welcome panel |
+| UC16 | View online users | Authenticated user | Sees the total online count and the number of users in each room |
 
 ---
 
@@ -125,8 +135,8 @@ ZapIF is a real-time chat system built on a TCP client-server architecture. The 
 | `server` | All server components |
 | `Servidor` | Entry point, `ServerSocket`, thread pool |
 | `ManipuladorCliente` | One thread per client; parses the protocol, validates and routes |
-| `Sala` | Groups connected clients, performs thread-safe broadcast |
-| `RegistroSessao` | Single-session control (prevents double login) |
+| `Sala` | Groups connected clients, performs thread-safe broadcast, builds per-room online counts |
+| `RegistroSessao` | Single-session control (prevents double login), total online count |
 | `BancoDados` | SQLite access: users, rooms, message history |
 
 ---
@@ -139,14 +149,18 @@ Plain text separated by `|`, one message per line (`\n`).
 |---|---|---|
 | `REGISTER\|name\|password` | client → server | Sign up |
 | `LOGIN\|name\|password` | client → server | Authenticate |
-| `JOIN\|room` | client → server | Join a room |
-| `MSG\|room\|name\|text` | both | Send / receive a message |
+| `JOIN\|room` | client → server | Join a room (leaves the previous one, if any) |
+| `LEAVE\|room` | client → server | Leave the current room (back to the welcome panel) |
+| `MSG\|room\|name\|text` | both | Send / receive a message — the server uses the authenticated username, not the one sent |
 | `PONG` | client → server | Heartbeat reply |
 | `OK\|context` | server → client | Acknowledgement (REGISTER, LOGIN) |
 | `ROOMS\|room1,room2,...` | server → client | Room list after login |
-| `HISTORY\|room\|msg1\|...` | server → client | History when joining a room |
-| `PING` | server → client | Heartbeat every 20 s |
+| `ONLINE\|total\|room1:n,room2:n,...` | server → client | Online users and per-room count (after login and on every join/leave/disconnect) |
+| `HISTORY\|room\|msg1\|...` | server → client | Last 50 messages when joining a room (`[HH:mm] name: text`, with date separators) |
+| `PING` | server → client | Heartbeat every 20 s after login |
 | `ERROR\|reason` | server → client | Descriptive error |
+
+Join/leave notices (`[nome entrou]`, `[nome saiu]`, `[nome desconectou]`) are sent as free-form text lines to the other members of the room. The current client ignores these lines. Lines longer than 4096 characters are rejected.
 
 ---
 
@@ -170,8 +184,9 @@ mensagens (id, sala_nome, usuario, texto, timestamp)
 |---|---|
 | Username | 3–24 characters, no `\|` |
 | Password | 6–64 characters |
-| Message text | 1–500 characters, `\|` stripped automatically |
-| Concurrent clients | up to 100 (server thread pool) |
+| Message text | 1–500 characters (excess is truncated), `\|` stripped automatically |
+| Room name | up to 64 characters, `\|` stripped; must exist in the database |
+| Concurrent clients | up to 100 served at once (server thread pool); extra connections wait in the pool queue |
 | History per room | last 50 messages |
 | Login timeout | 10 s with no response → re-enables buttons |
 | Heartbeat | PING every 20 s; read timeout at 45 s |
