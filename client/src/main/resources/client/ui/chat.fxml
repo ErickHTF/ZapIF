@@ -12,18 +12,18 @@
             stylesheets="@style.css"
             prefWidth="860" prefHeight="560">
 
-    <!-- Banner offline -->
+    <!-- Offline banner -->
     <top>
         <HBox fx:id="bannerOffline" visible="false" managed="false" alignment="CENTER">
             <Label text="Sem conexão — reconectando..."/>
         </HBox>
     </top>
 
-    <!-- Barra lateral -->
+    <!-- Sidebar -->
     <left>
         <VBox fx:id="sidebar" minWidth="170" maxWidth="170">
 
-            <!-- Perfil do usuário -->
+            <!-- User profile -->
             <HBox styleClass="perfil-header" alignment="CENTER" spacing="10">
                 <ImageView fitWidth="36" fitHeight="36" preserveRatio="true">
                     <image><Image url="@../icon.png"/></image>
@@ -34,7 +34,7 @@
                 </HBox>
             </HBox>
 
-            <!-- Contador online -->
+            <!-- Online counter -->
             <HBox styleClass="online-secao" alignment="CENTER_LEFT">
                 <Label fx:id="labelTotalOnline" text="" styleClass="label-online-count"/>
             </HBox>
@@ -56,11 +56,11 @@
         </VBox>
     </left>
 
-    <!-- Área principal -->
+    <!-- Main area -->
     <center>
         <StackPane>
 
-            <!-- Tela de boas-vindas (visível antes de selecionar uma sala) -->
+            <!-- Welcome screen (visible before a room is selected) -->
             <VBox fx:id="painelBemVindo" alignment="CENTER" spacing="16">
                 <ImageView fitWidth="96" fitHeight="96" preserveRatio="true">
                     <image><Image url="@../icon.png"/></image>
@@ -70,7 +70,7 @@
                        styleClass="boas-vindas-instrucao"/>
             </VBox>
 
-            <!-- Área de chat (visível após selecionar uma sala) -->
+            <!-- Chat area (visible after a room is selected) -->
             <VBox fx:id="painelChat" visible="false" managed="false"
                   maxWidth="1.7976931348623157E308" maxHeight="1.7976931348623157E308">
                 <ListView fx:id="listaMensagens" VBox.vgrow="ALWAYS">

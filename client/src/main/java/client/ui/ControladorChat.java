@@ -141,7 +141,7 @@ public class ControladorChat implements OuvinteMensagem {
     @FXML
     private void aoClicarInicio() {
         String saindo = salaAtual;
-        listaSalas.getSelectionModel().clearSelection(); // salaAtual ainda "ajuda" → listener não re-entra
+        listaSalas.getSelectionModel().clearSelection(); // salaAtual is still "ajuda" → listener does not re-enter
         salaAtual = null;
         if (saindo != null) conexao.enviar("LEAVE|" + saindo);
         Platform.runLater(() -> {

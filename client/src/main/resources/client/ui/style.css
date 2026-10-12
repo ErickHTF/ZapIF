@@ -52,7 +52,7 @@
     -fx-font-size: 11px;
 }
 
-/* -- banner offline ------------------------------------------------------ */
+/* -- offline banner ------------------------------------------------------ */
 #bannerOffline {
     -fx-background-color: #c8131a;
     -fx-padding: 6 16;
@@ -152,7 +152,7 @@
     -fx-text-fill: #28231f;
 }
 
-/* -- lista de salas (células) -------------------------------------------- */
+/* -- room list (cells) -------------------------------------------------- */
 .sala-cell {
     -fx-alignment: CENTER_LEFT;
 }
@@ -203,7 +203,7 @@
     -fx-text-fill: #28231f;
 }
 
-/* -- sidebar sala list --------------------------------------------------- */
+/* -- sidebar room list --------------------------------------------------- */
 #listaSalas .list-cell,
 #listaSalas .list-cell:odd,
 #listaSalas .list-cell:even,
@@ -271,7 +271,7 @@
     -fx-background-color: #ffffff;
 }
 
-/* -- botoes -------------------------------------------------------------- */
+/* -- buttons ------------------------------------------------------------- */
 .button {
     -fx-background-color: #d8d8d8;
     -fx-text-fill: #444444;
@@ -305,7 +305,7 @@
     -fx-border-width: 1 0 0 0;
 }
 
-/* -- boas-vindas --------------------------------------------------------- */
+/* -- welcome ------------------------------------------------------------- */
 .boas-vindas-titulo {
     -fx-text-fill: #389739;
     -fx-font-size: 26px;
@@ -317,7 +317,7 @@
     -fx-font-size: 14px;
 }
 
-/* -- mensagens ----------------------------------------------------------- */
+/* -- messages ------------------------------------------------------------ */
 .celula-separador {
     -fx-text-fill: #aaaaaa;
     -fx-font-size: 11px;
@@ -331,7 +331,7 @@
     -fx-font-size: 13px;
 }
 
-/* -- area de input ------------------------------------------------------- */
+/* -- input area ---------------------------------------------------------- */
 .input-area {
     -fx-padding: 10 12 12 12;
     -fx-spacing: 8;

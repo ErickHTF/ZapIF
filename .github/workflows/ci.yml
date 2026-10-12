@@ -23,6 +23,6 @@ jobs:
           java-version: ${{ matrix.java }}
           cache: maven
 
-      # Compila servidor e cliente pelo pom agregador (JavaFX compila sem display)
+      # Builds server and client through the aggregator pom (JavaFX builds without a display)
       - name: Build
         run: ./mvnw -B verify

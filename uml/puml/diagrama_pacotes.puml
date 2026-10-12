@@ -1,5 +1,5 @@
 @startuml diagrama_pacotes
-title ZapIF — Diagrama de Pacotes e Arquitetura
+title ZapIF — Package and Architecture Diagram
 
 skinparam Shadowing false
 skinparam linetype ortho
@@ -29,9 +29,9 @@ skinparam node {
 }
 
 ' ═══════════════════════════════════════════════════════
-' LADO CLIENTE
+' CLIENT SIDE
 ' ═══════════════════════════════════════════════════════
-node "Máquina do Usuário\n(JavaFX Desktop)" as MaquinaCliente {
+node "User Machine\n(JavaFX Desktop)" as MaquinaCliente {
 
     package "client" {
 
@@ -56,9 +56,9 @@ node "Máquina do Usuário\n(JavaFX Desktop)" as MaquinaCliente {
 }
 
 ' ═══════════════════════════════════════════════════════
-' LADO SERVIDOR
+' SERVER SIDE
 ' ═══════════════════════════════════════════════════════
-node "Servidor\n(Java SE — processo único)" as MaquinaServidor {
+node "Server\n(Java SE — single process)" as MaquinaServidor {
 
     package "server" {
         [Servidor]
@@ -76,29 +76,29 @@ node "Servidor\n(Java SE — processo único)" as MaquinaServidor {
 }
 
 ' ═══════════════════════════════════════════════════════
-' DEPENDÊNCIAS INTERNAS — CLIENTE
+' INTERNAL DEPENDENCIES — CLIENT
 ' ═══════════════════════════════════════════════════════
-[Main]             --> [Conexao]              : cria
-[ControladorLogin] --> [Conexao]              : usa
-[ControladorChat]  --> [Conexao]              : usa
-[ControladorLogin] ..> [ControladorChat]      : abre
-[ControladorChat]  ..> [Mensagem]             : instancia
-[Conexao]          ..> [OuvinteMensagem]      : notifica
-[Conexao]          ..> [OuvinteStatusConexao] : notifica
+[Main]             --> [Conexao]              : creates
+[ControladorLogin] --> [Conexao]              : uses
+[ControladorChat]  --> [Conexao]              : uses
+[ControladorLogin] ..> [ControladorChat]      : opens
+[ControladorChat]  ..> [Mensagem]             : instantiates
+[Conexao]          ..> [OuvinteMensagem]      : notifies
+[Conexao]          ..> [OuvinteStatusConexao] : notifies
 
 ' ═══════════════════════════════════════════════════════
-' DEPENDÊNCIAS INTERNAS — SERVIDOR
+' INTERNAL DEPENDENCIES — SERVER
 ' ═══════════════════════════════════════════════════════
-[Servidor]           --> [ManipuladorCliente] : submete ao pool
-[ManipuladorCliente] --> [Sala]              : entra / sai
-[ManipuladorCliente] --> [BancoDados]        : persiste / consulta
-[ManipuladorCliente] --> [RegistroSessao]    : registra / libera
+[Servidor]           --> [ManipuladorCliente] : submits to pool
+[ManipuladorCliente] --> [Sala]              : joins / leaves
+[ManipuladorCliente] --> [BancoDados]        : persists / queries
+[ManipuladorCliente] --> [RegistroSessao]    : registers / releases
 [Sala]               --> [ManipuladorCliente] : broadcast
 [BancoDados]         --> DB                  : JDBC
 
 ' ═══════════════════════════════════════════════════════
-' COMUNICAÇÃO ENTRE CLIENTE E SERVIDOR
+' CLIENT-SERVER COMMUNICATION
 ' ═══════════════════════════════════════════════════════
-[Conexao] <--> [ManipuladorCliente] : TCP Socket · porta 5001\nprotocolo texto separado por "|"
+[Conexao] <--> [ManipuladorCliente] : TCP Socket · port 5001\n"|"-separated text protocol
 
 @enduml

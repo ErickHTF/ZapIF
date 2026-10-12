@@ -17,8 +17,8 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>21</javafx.version>
-        <!-- Vazios = usa ZAPIF_HOST/ZAPIF_PORT ou o padrão (localhost:5001).
-             Ex.: ./mvnw -pl client javafx:run -Dzapif.host=192.168.0.10 -->
+        <!-- Empty = uses ZAPIF_HOST/ZAPIF_PORT or the default (localhost:5001).
+             E.g.: ./mvnw -pl client javafx:run -Dzapif.host=192.168.0.10 -->
         <zapif.host></zapif.host>
         <zapif.port></zapif.port>
     </properties>

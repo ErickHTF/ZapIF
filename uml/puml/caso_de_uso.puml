@@ -1,5 +1,5 @@
 @startuml caso_de_uso
-title ZapIF — Diagrama de Caso de Uso
+title ZapIF — Use Case Diagram
 
 skinparam actorStyle awesome
 skinparam usecase {
@@ -19,43 +19,43 @@ skinparam rectangle {
 skinparam ArrowColor #475569
 skinparam Shadowing false
 
-' ── Atores ────────────────────────────────────────────────────────
-actor "Usuário\nNão Autenticado" as Anonimo
-actor "Usuário\nAutenticado"     as Autenticado
+' ── Actors ────────────────────────────────────────────────────────
+actor "Unauthenticated\nUser" as Anonimo
+actor "Authenticated\nUser"     as Autenticado
 
-' ── Sistema ───────────────────────────────────────────────────────
+' ── System ───────────────────────────────────────────────────────
 rectangle "ZapIF" {
 
-    ' Pré-login
-    usecase "Cadastrar conta" as UC01
-    usecase "Fazer login"     as UC02
+    ' Pre-login
+    usecase "Sign up" as UC01
+    usecase "Log in"          as UC02
 
-    ' Pós-login — navegação
-    usecase "Visualizar salas disponíveis" as UC03
-    usecase "Entrar em sala"               as UC04
-    usecase "Trocar de sala"               as UC08
+    ' Post-login — navigation
+    usecase "View available rooms"         as UC03
+    usecase "Join room"                    as UC04
+    usecase "Switch rooms"                 as UC08
 
-    ' Pós-login — mensagens
-    usecase "Enviar mensagem"                as UC05
-    usecase "Receber mensagem em tempo real" as UC06
-    usecase "Visualizar histórico da sala"   as UC07
+    ' Post-login — messages
+    usecase "Send message"                   as UC05
+    usecase "Receive message in real time"   as UC06
+    usecase "View room history"              as UC07
 
-    ' Conexão
-    usecase "Desconectar"              as UC09
-    usecase "Reconectar automaticamente" as UC14
+    ' Connection
+    usecase "Disconnect"               as UC09
+    usecase "Reconnect automatically"  as UC14
 
-    ' Comportamentos internos do servidor (include/extend)
-    usecase "Validar credenciais\n(PBKDF2)"         as UC10
-    usecase "Persistir mensagem\n(SQLite)"           as UC11
-    usecase "Transmitir mensagem\n(broadcast)"       as UC12
-    usecase "Detectar inatividade\n(PING / PONG)"    as UC13
+    ' Internal server behavior (include/extend)
+    usecase "Validate credentials\n(PBKDF2)"         as UC10
+    usecase "Persist message\n(SQLite)"           as UC11
+    usecase "Broadcast message"       as UC12
+    usecase "Detect inactivity\n(PING / PONG)"    as UC13
 }
 
-' ── Associações do Usuário Não Autenticado ────────────────────────
+' ── Unauthenticated User associations ─────────────────────────────
 Anonimo --> UC01
 Anonimo --> UC02
 
-' ── Associações do Usuário Autenticado ───────────────────────────
+' ── Authenticated User associations ─────────────────────────────
 Autenticado --> UC03
 Autenticado --> UC04
 Autenticado --> UC05
@@ -64,14 +64,14 @@ Autenticado --> UC07
 Autenticado --> UC08
 Autenticado --> UC09
 
-' ── Include (comportamento obrigatório) ──────────────────────────
+' ── Include (mandatory behavior) ─────────────────────────────────
 UC02 ..> UC10 : <<include>>
 UC05 ..> UC11 : <<include>>
 UC05 ..> UC12 : <<include>>
 UC04 ..> UC07 : <<include>>
 
-' ── Extend (comportamento condicional) ───────────────────────────
-UC09 ..> UC14 : <<extend>>\nqueda de rede
-UC13 ..> UC09 : <<extend>>\ntimeout sem PONG
+' ── Extend (conditional behavior) ─────────────────────────────────
+UC09 ..> UC14 : <<extend>>\nnetwork drop
+UC13 ..> UC09 : <<extend>>\ntimeout without PONG
 
 @enduml
