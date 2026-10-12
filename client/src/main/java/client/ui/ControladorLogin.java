@@ -27,6 +27,8 @@ public class ControladorLogin implements OuvinteMensagem {
     @FXML private Button        botaoCadastro;
 
     private Conexao conexao;
+    private String nomeLogin;
+    private String senhaLogin;
 
     private final ScheduledExecutorService agendador =
             Executors.newSingleThreadScheduledExecutor(r -> {
@@ -63,6 +65,8 @@ public class ControladorLogin implements OuvinteMensagem {
 
         definirOcupado(true);
         agendarTimeout();
+        nomeLogin = nome;
+        senhaLogin = senha;
         conexao.enviar("LOGIN|" + nome + "|" + senha);
     }
 
@@ -93,7 +97,7 @@ public class ControladorLogin implements OuvinteMensagem {
                 cancelarTimeout();
                 String[] salas = (partes.length > 1 && !partes[1].isEmpty())
                         ? partes[1].split(",") : new String[0];
-                abrirChat(campoUsuario.getText().trim(), salas);
+                abrirChat(nomeLogin, salas);
             }
             case "ERROR" -> {
                 cancelarTimeout();
@@ -111,7 +115,9 @@ public class ControladorLogin implements OuvinteMensagem {
                 Scene cena = new Scene(carregador.load());
 
                 ControladorChat ctrl = carregador.getController();
-                ctrl.configurar(nomeUsuario, salas);
+                ctrl.configurar(nomeUsuario, senhaLogin, salas);
+                senhaLogin = null;
+                campoSenha.clear();
 
                 Stage palco = (Stage) campoUsuario.getScene().getWindow();
                 palco.setResizable(true);

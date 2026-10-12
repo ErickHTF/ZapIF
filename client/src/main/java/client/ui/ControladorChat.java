@@ -3,6 +3,7 @@ package client.ui;
 import client.Main;
 import client.model.Mensagem;
 import client.network.Conexao;
+import client.network.RestauracaoSessao;
 import client.network.OuvinteMensagem;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -38,6 +39,8 @@ public class ControladorChat implements OuvinteMensagem {
     private Conexao conexao;
     private String  nomeUsuario;
     private String  salaAtual;
+    private RestauracaoSessao restauracao;
+    private boolean sessaoPronta = true;
     private final Map<String, Integer> contagemPorSala = new HashMap<>();
 
     @FXML
@@ -46,12 +49,19 @@ public class ControladorChat implements OuvinteMensagem {
         conexao.adicionarOuvinteMensagem(this);
 
         conexao.adicionarOuvinteStatus(status -> {
-            boolean offline = status == Conexao.Status.DESCONECTADO;
+            if (status != Conexao.Status.CONECTADO) {
+                sessaoPronta = false;
+                if (restauracao != null) restauracao.desconectou();
+            } else if (restauracao != null) {
+                restauracao.conectou(conexao::enviar);
+            }
+            boolean offline = !sessaoPronta;
             Platform.runLater(() -> {
                 bannerOffline.setVisible(offline);
                 bannerOffline.setManaged(offline);
                 botaoEnviar.setDisable(offline);
                 campoMensagem.setDisable(offline);
+                listaSalas.setDisable(offline);
             });
         });
 
@@ -109,8 +119,9 @@ public class ControladorChat implements OuvinteMensagem {
         });
     }
 
-    public void configurar(String nomeUsuario, String[] salas) {
+    public void configurar(String nomeUsuario, String senha, String[] salas) {
         this.nomeUsuario = nomeUsuario;
+        this.restauracao = new RestauracaoSessao(nomeUsuario, senha);
         Platform.runLater(() -> {
             labelNomeUsuario.setText(nomeUsuario);
             listaSalas.getItems().addAll(Arrays.asList(salas));
@@ -118,6 +129,7 @@ public class ControladorChat implements OuvinteMensagem {
     }
 
     private void entrarNaSala(String sala) {
+        if (!sessaoPronta) return;
         salaAtual = sala;
         Platform.runLater(() -> {
             listaMensagens.getItems().clear();
@@ -140,6 +152,7 @@ public class ControladorChat implements OuvinteMensagem {
 
     @FXML
     private void aoClicarInicio() {
+        if (!sessaoPronta) return;
         String saindo = salaAtual;
         listaSalas.getSelectionModel().clearSelection(); // salaAtual is still "ajuda" → listener does not re-enter
         salaAtual = null;
@@ -159,7 +172,7 @@ public class ControladorChat implements OuvinteMensagem {
         String bruto = campoMensagem.getText().replace("|", "").trim();
         String texto = bruto.length() > 500 ? bruto.substring(0, 500) : bruto;
 
-        if (texto.isEmpty() || salaAtual == null) return;
+        if (!sessaoPronta || texto.isEmpty() || salaAtual == null) return;
         conexao.enviar("MSG|" + salaAtual + "|" + nomeUsuario + "|" + texto);
         campoMensagem.clear();
     }
@@ -172,6 +185,13 @@ public class ControladorChat implements OuvinteMensagem {
     @Override
     public void aoReceberMensagem(String mensagem) {
         String[] partes = mensagem.split("\\|", -1);
+        if (restauracao != null && restauracao.recebeu(mensagem, salaAtual, conexao::enviar)) {
+            concluirRestauracao();
+        }
+        if (restauracao != null && restauracao.pendente() && "ERROR".equals(partes[0])) {
+            adicionarLinha("Não foi possível restaurar a sessão: "
+                    + (partes.length > 1 ? partes[1] : "erro desconhecido"));
+        }
         switch (partes[0]) {
             case "MSG" -> {
                 if (partes.length >= 4 && partes[1].equals(salaAtual)) {
@@ -208,6 +228,15 @@ public class ControladorChat implements OuvinteMensagem {
                 }
             }
         }
+    }
+
+    private void concluirRestauracao() {
+        sessaoPronta = true;
+        bannerOffline.setVisible(false);
+        bannerOffline.setManaged(false);
+        botaoEnviar.setDisable(false);
+        campoMensagem.setDisable(false);
+        listaSalas.setDisable(false);
     }
 
     private void adicionarLinha(String linha) {
