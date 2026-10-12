@@ -1,5 +1,5 @@
 @startuml diagrama_classes
-title ZapIF — Diagrama de Classes
+title ZapIF — Class Diagram
 
 skinparam classAttributeIconSize 0
 skinparam groupInheritance 2
@@ -33,11 +33,11 @@ skinparam ArrowColor #475569
 skinparam ArrowThickness 1.2
 
 ' ═══════════════════════════════════════════════════════
-' CLIENTE
+' CLIENT
 ' ═══════════════════════════════════════════════════════
 package "client" {
 
-    class Main <<Aplicação>> {
+    class Main <<Application>> {
         - {static} conexao : Conexao
         --
         + start(palco : Stage) : void
@@ -115,8 +115,8 @@ package "client" {
         }
 
         Conexao +-- Status
-        Conexao o-- "0..*" OuvinteMensagem      : notifica >
-        Conexao o-- "0..*" OuvinteStatusConexao : notifica >
+        Conexao o-- "0..*" OuvinteMensagem      : notifies >
+        Conexao o-- "0..*" OuvinteStatusConexao : notifies >
     }
 
     ' ── ui ──────────────────────────────────────────────
@@ -171,7 +171,7 @@ package "client" {
 }
 
 ' ═══════════════════════════════════════════════════════
-' SERVIDOR
+' SERVER
 ' ═══════════════════════════════════════════════════════
 package "server" {
 
@@ -250,25 +250,25 @@ package "server" {
 }
 
 ' ═══════════════════════════════════════════════════════
-' RELACIONAMENTOS
+' RELATIONSHIPS
 ' ═══════════════════════════════════════════════════════
 
-' Interfaces implementadas
+' Implemented interfaces
 ControladorLogin ..|> OuvinteMensagem
 ControladorChat  ..|> OuvinteMensagem
 
-' Cliente — composição e dependências
-Main             "1" *--  "1"    Conexao          : gerencia
-ControladorLogin "1" -->  "1"    Conexao          : usa
-ControladorChat  "1" -->  "1"    Conexao          : usa
-ControladorLogin       ..>       ControladorChat  : abre >
-ControladorChat        ..>       Mensagem         : cria >
+' Client — composition and dependencies
+Main             "1" *--  "1"    Conexao          : manages
+ControladorLogin "1" -->  "1"    Conexao          : uses
+ControladorChat  "1" -->  "1"    Conexao          : uses
+ControladorLogin       ..>       ControladorChat  : opens >
+ControladorChat        ..>       Mensagem         : creates >
 
-' Servidor — composição e dependências
-Servidor         "1" *-- "0..*"  ManipuladorCliente : cria threads >
-ManipuladorCliente "1" -->  "1"  Sala               : participa >
-ManipuladorCliente      ..>      BancoDados         : consulta/persiste >
-ManipuladorCliente      ..>      RegistroSessao     : registra/libera >
-Sala             "1" o-- "0..*"  ManipuladorCliente : contém >
+' Server — composition and dependencies
+Servidor         "1" *-- "0..*"  ManipuladorCliente : spawns threads >
+ManipuladorCliente "1" -->  "1"  Sala               : joins >
+ManipuladorCliente      ..>      BancoDados         : queries/persists >
+ManipuladorCliente      ..>      RegistroSessao     : registers/releases >
+Sala             "1" o-- "0..*"  ManipuladorCliente : contains >
 
 @enduml

@@ -1,83 +1,83 @@
-# ZapIF — Documento de Escopo
+# ZapIF — Scope Document
 
-## 1. Visão Geral
+## 1. Overview
 
-ZapIF é um sistema de chat em tempo real baseado em arquitetura cliente-servidor TCP. O servidor é um processo Java puro com banco SQLite; o cliente é uma aplicação desktop JavaFX. A comunicação usa um protocolo de texto simples delimitado por `|`.
+ZapIF is a real-time chat system built on a TCP client-server architecture. The server is a plain Java process with a SQLite database; the client is a JavaFX desktop application. Communication uses a simple `|`-delimited text protocol.
 
 ---
 
-## 2. Telas (Interfaces do Usuário)
+## 2. Screens (User Interfaces)
 
-### Tela 1 — Login / Cadastro (`login.fxml`)
+### Screen 1 — Login / Sign-up (`login.fxml`)
 
-**Objetivo:** autenticar ou registrar um usuário antes de acessar o chat.
+**Goal:** authenticate or register a user before accessing the chat.
 
-| Elemento | Tipo | Descrição |
+| Element | Type | Description |
 |---|---|---|
-| Campo "Nome de usuário" | TextField | 3–24 caracteres, sem `\|` |
-| Campo "Senha" | PasswordField | 6–64 caracteres |
-| Botão "Entrar" | Button | Envia `LOGIN\|nome\|senha` ao servidor |
-| Botão "Cadastrar" | Button | Envia `REGISTER\|nome\|senha` ao servidor |
-| Label de status | Label | Exibe erros de validação, estado da conexão e feedback do servidor |
+| "Nome de usuário" (Username) field | TextField | 3–24 characters, no `\|` |
+| "Senha" (Password) field | PasswordField | 6–64 characters |
+| "Entrar" (Log in) button | Button | Sends `LOGIN\|name\|password` to the server |
+| "Cadastrar" (Sign up) button | Button | Sends `REGISTER\|name\|password` to the server |
+| Status label | Label | Shows validation errors, connection state and server feedback |
 
-**Fluxos:**
-- Cadastro bem-sucedido → label exibe "Cadastro realizado! Faça login"
-- Login bem-sucedido → transição automática para a Tela 2
-- Erro (credenciais inválidas, usuário já existe) → label exibe a mensagem de erro
-- Sem conexão → botões desabilitados, label exibe "Sem conexão — tentando reconectar..."
-- Timeout de 10 s sem resposta → label exibe aviso e reabilita botões
+**Flows:**
+- Successful sign-up → label shows "Cadastro realizado! Faça login" (Signed up! Please log in)
+- Successful login → automatic transition to Screen 2
+- Error (invalid credentials, user already exists) → label shows the error message
+- No connection → buttons disabled, label shows "Sem conexão — tentando reconectar..." (No connection — trying to reconnect...)
+- 10 s timeout with no response → label shows a warning and re-enables the buttons
 
 ---
 
-### Tela 2 — Chat (`chat.fxml`)
+### Screen 2 — Chat (`chat.fxml`)
 
-**Objetivo:** permitir que o usuário envie e receba mensagens em salas de chat.
+**Goal:** let the user send and receive messages in chat rooms.
 
-| Elemento | Tipo | Descrição |
+| Element | Type | Description |
 |---|---|---|
-| Lista de salas | ListView | Exibe as salas disponíveis; clique troca de sala |
-| Lista de mensagens | ListView | Exibe o histórico e mensagens em tempo real da sala ativa |
-| Campo de mensagem | TextField | Texto a enviar; `Enter` ou botão dispara o envio |
-| Botão "Enviar" | Button | Envia `MSG\|sala\|usuario\|texto` |
-| Banner offline | HBox (vermelho) | Aparece quando a conexão cai; some ao reconectar |
+| Room list | ListView | Shows the available rooms; clicking switches rooms |
+| Message list | ListView | Shows the history and real-time messages of the active room |
+| Message field | TextField | Text to send; `Enter` or the button sends it |
+| "Enviar" (Send) button | Button | Sends `MSG\|room\|user\|text` |
+| Offline banner | HBox (red) | Appears when the connection drops; disappears on reconnect |
 
-**Fluxos:**
-- Ao entrar na tela → sala 0 selecionada automaticamente, histórico carregado
-- Troca de sala → lista de mensagens limpa, novo histórico carregado
-- Mensagem recebida → adicionada ao final da lista, scroll automático para baixo
-- Conexão cai → banner vermelho aparece, campo e botão desabilitados
-- Reconexão → banner some, campo e botão reabilitados
+**Flows:**
+- On entering the screen → room 0 selected automatically, history loaded
+- Switching rooms → message list cleared, new history loaded
+- Message received → appended to the end of the list, auto-scroll to the bottom
+- Connection drops → red banner appears, field and button disabled
+- Reconnection → banner disappears, field and button re-enabled
 
 ---
 
-## 3. Casos de Uso
+## 3. Use Cases
 
-| ID | Nome | Ator | Descrição resumida |
+| ID | Name | Actor | Summary |
 |---|---|---|---|
-| UC01 | Cadastrar conta | Usuário não autenticado | Cria uma nova conta com nome e senha |
-| UC02 | Fazer login | Usuário não autenticado | Autentica com credenciais existentes |
-| UC03 | Visualizar salas | Usuário autenticado | Vê a lista de salas disponíveis |
-| UC04 | Entrar em sala | Usuário autenticado | Seleciona uma sala e carrega o histórico |
-| UC05 | Enviar mensagem | Usuário autenticado | Envia texto para a sala atual |
-| UC06 | Receber mensagem em tempo real | Usuário autenticado | Recebe mensagens de outros usuários via broadcast |
-| UC07 | Visualizar histórico | Usuário autenticado | Carrega as últimas 50 mensagens ao entrar na sala |
-| UC08 | Trocar de sala | Usuário autenticado | Sai da sala atual e entra em outra |
-| UC09 | Desconectar | Usuário autenticado | Fecha o cliente; sessão liberada no servidor |
-| UC10 | Validar credenciais | Servidor | Verifica nome/senha com PBKDF2 no banco |
-| UC11 | Persistir mensagem | Servidor | Salva mensagem no SQLite antes do broadcast |
-| UC12 | Transmitir mensagem (broadcast) | Servidor | Envia a mensagem para todos na sala |
-| UC13 | Heartbeat PING/PONG | Servidor | Detecta clientes inativos a cada 20 s |
-| UC14 | Reconectar automaticamente | Cliente | Tenta reconectar ao servidor a cada 5 s após queda |
+| UC01 | Sign up | Unauthenticated user | Creates a new account with name and password |
+| UC02 | Log in | Unauthenticated user | Authenticates with existing credentials |
+| UC03 | View rooms | Authenticated user | Sees the list of available rooms |
+| UC04 | Join room | Authenticated user | Selects a room and loads its history |
+| UC05 | Send message | Authenticated user | Sends text to the current room |
+| UC06 | Receive message in real time | Authenticated user | Receives messages from other users via broadcast |
+| UC07 | View history | Authenticated user | Loads the last 50 messages when joining the room |
+| UC08 | Switch rooms | Authenticated user | Leaves the current room and joins another |
+| UC09 | Disconnect | Authenticated user | Closes the client; session released on the server |
+| UC10 | Validate credentials | Server | Checks name/password with PBKDF2 against the database |
+| UC11 | Persist message | Server | Saves the message to SQLite before broadcasting |
+| UC12 | Broadcast message | Server | Sends the message to everyone in the room |
+| UC13 | PING/PONG heartbeat | Server | Detects idle clients every 20 s |
+| UC14 | Reconnect automatically | Client | Retries connecting to the server every 5 s after a drop |
 
 ---
 
-## 4. Arquitetura
+## 4. Architecture
 
-### Visão em camadas
+### Layered view
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                  CLIENTE (JavaFX)                   │
+│                  CLIENT (JavaFX)                    │
 │  ┌──────────┐  ┌──────────────┐  ┌───────────────┐ │
 │  │  client  │  │ client.ui    │  │ client.model  │ │
 │  │  .Main   │  │ ControladorL │  │ Mensagem      │ │
@@ -89,10 +89,10 @@ ZapIF é um sistema de chat em tempo real baseado em arquitetura cliente-servido
 │                │           OuvinteStatusConexao   │ │
 │                └──────────────────────────────────┘ │
 └───────────────────────┬─────────────────────────────┘
-                        │ TCP Socket (porta 5001)
-                        │ protocolo texto com "|"
+                        │ TCP Socket (port 5001)
+                        │ text protocol with "|"
 ┌───────────────────────┴─────────────────────────────┐
-│                  SERVIDOR (Java SE)                 │
+│                  SERVER (Java SE)                   │
 │  ┌───────────┐  ┌──────────────────┐  ┌──────────┐ │
 │  │ Servidor  │  │ManipuladorCliente│  │  Sala    │ │
 │  │ (main +   │  │ (1 thread/client)│  │(broadcast│ │
@@ -109,48 +109,48 @@ ZapIF é um sistema de chat em tempo real baseado em arquitetura cliente-servido
 └─────────────────────────────────────────────────────┘
 ```
 
-### Pacotes do cliente
+### Client packages
 
-| Pacote | Responsabilidade |
+| Package | Responsibility |
 |---|---|
-| `client` | Entry point (`Main`), ciclo de vida da aplicação JavaFX |
-| `client.ui` | Controllers das telas (FXML + lógica de apresentação) |
-| `client.network` | Conexão TCP, retry automático, entrega de mensagens na thread JavaFX |
-| `client.model` | Objetos de domínio (`Mensagem`, `Usuario`) |
+| `client` | Entry point (`Main`), JavaFX application lifecycle |
+| `client.ui` | Screen controllers (FXML + presentation logic) |
+| `client.network` | TCP connection, automatic retry, message delivery on the JavaFX thread |
+| `client.model` | Domain objects (`Mensagem`, `Usuario`) |
 
-### Pacotes do servidor
+### Server package
 
-| Pacote | Responsabilidade |
+| Package / class | Responsibility |
 |---|---|
-| `server` | Todos os componentes do servidor |
-| `Servidor` | Entry point, `ServerSocket`, pool de threads |
-| `ManipuladorCliente` | Uma thread por cliente; interpreta o protocolo, valida e roteia |
-| `Sala` | Agrupa clientes conectados, executa broadcast thread-safe |
-| `RegistroSessao` | Controle de sessões únicas (impede login duplo) |
-| `BancoDados` | Acesso ao SQLite: usuários, salas, histórico de mensagens |
+| `server` | All server components |
+| `Servidor` | Entry point, `ServerSocket`, thread pool |
+| `ManipuladorCliente` | One thread per client; parses the protocol, validates and routes |
+| `Sala` | Groups connected clients, performs thread-safe broadcast |
+| `RegistroSessao` | Single-session control (prevents double login) |
+| `BancoDados` | SQLite access: users, rooms, message history |
 
 ---
 
-## 5. Protocolo de Comunicação
+## 5. Communication Protocol
 
-Texto puro separado por `|`, uma mensagem por linha (`\n`).
+Plain text separated by `|`, one message per line (`\n`).
 
-| Mensagem | Direção | Descrição |
+| Message | Direction | Description |
 |---|---|---|
-| `REGISTER\|nome\|senha` | cliente → servidor | Cadastrar usuário |
-| `LOGIN\|nome\|senha` | cliente → servidor | Autenticar |
-| `JOIN\|sala` | cliente → servidor | Entrar em sala |
-| `MSG\|sala\|nome\|texto` | ambos | Enviar / receber mensagem |
-| `PONG` | cliente → servidor | Resposta ao heartbeat |
-| `OK\|contexto` | servidor → cliente | Confirmação (REGISTER, LOGIN) |
-| `ROOMS\|sala1,sala2,...` | servidor → cliente | Lista de salas após login |
-| `HISTORY\|sala\|msg1\|...` | servidor → cliente | Histórico ao entrar na sala |
-| `PING` | servidor → cliente | Heartbeat a cada 20 s |
-| `ERROR\|motivo` | servidor → cliente | Erro descritivo |
+| `REGISTER\|name\|password` | client → server | Sign up |
+| `LOGIN\|name\|password` | client → server | Authenticate |
+| `JOIN\|room` | client → server | Join a room |
+| `MSG\|room\|name\|text` | both | Send / receive a message |
+| `PONG` | client → server | Heartbeat reply |
+| `OK\|context` | server → client | Acknowledgement (REGISTER, LOGIN) |
+| `ROOMS\|room1,room2,...` | server → client | Room list after login |
+| `HISTORY\|room\|msg1\|...` | server → client | History when joining a room |
+| `PING` | server → client | Heartbeat every 20 s |
+| `ERROR\|reason` | server → client | Descriptive error |
 
 ---
 
-## 6. Banco de Dados
+## 6. Database
 
 ```sql
 usuarios  (id, nome UNIQUE, senha_hash, salt)
@@ -158,34 +158,34 @@ salas     (id, nome UNIQUE)
 mensagens (id, sala_nome, usuario, texto, timestamp)
 ```
 
-- Senhas: **PBKDF2-HMAC-SHA256** + salt aleatório por usuário (100 000 iterações)
-- Salas padrão criadas na inicialização: `geral`, `off-topic`, `ajuda`
-- Histórico: últimas 50 mensagens por sala, retornadas em ordem cronológica
+- Passwords: **PBKDF2-HMAC-SHA256** + random per-user salt (100,000 iterations)
+- Default rooms created at startup: `geral`, `off-topic`, `ajuda`
+- History: last 50 messages per room, returned in chronological order
 
 ---
 
-## 7. Restrições e Limites
+## 7. Constraints and Limits
 
-| Campo | Regra |
+| Field | Rule |
 |---|---|
-| Nome de usuário | 3–24 caracteres, sem `\|` |
-| Senha | 6–64 caracteres |
-| Texto de mensagem | 1–500 caracteres, `\|` removido automaticamente |
-| Clientes simultâneos | máximo 100 (pool de threads do servidor) |
-| Histórico por sala | últimas 50 mensagens |
-| Timeout de login | 10 s sem resposta → reabilita botões |
-| Heartbeat | PING a cada 20 s; timeout de leitura em 45 s |
-| Retry de conexão | a cada 5 s após queda |
+| Username | 3–24 characters, no `\|` |
+| Password | 6–64 characters |
+| Message text | 1–500 characters, `\|` stripped automatically |
+| Concurrent clients | up to 100 (server thread pool) |
+| History per room | last 50 messages |
+| Login timeout | 10 s with no response → re-enables buttons |
+| Heartbeat | PING every 20 s; read timeout at 45 s |
+| Connection retry | every 5 s after a drop |
 
 ---
 
-## 8. Fora do Escopo (versão atual)
+## 8. Out of Scope (current version)
 
-- Mensagens privadas (DM) entre usuários
-- Criação/exclusão de salas pelo usuário
-- Upload de arquivos ou imagens
-- Notificações de desktop
-- Criptografia da conexão (TLS/SSL)
-- Interface web ou mobile
-- Autenticação com OAuth / SSO
-- Administração de usuários (banir, moderar)
+- Private messages (DMs) between users
+- Users creating/deleting rooms
+- File or image uploads
+- Desktop notifications
+- Connection encryption (TLS/SSL)
+- Web or mobile interface
+- OAuth / SSO authentication
+- User administration (banning, moderation)

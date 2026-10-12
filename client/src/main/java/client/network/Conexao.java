@@ -15,7 +15,7 @@ public class Conexao {
 
     public enum Status { CONECTANDO, CONECTADO, DESCONECTADO }
 
-    // Configuráveis sem recompilar: -Dzapif.host / -Dzapif.port ou ZAPIF_HOST / ZAPIF_PORT
+    // Configurable without recompiling: -Dzapif.host / -Dzapif.port or ZAPIF_HOST / ZAPIF_PORT
     static final String HOST               = configuracao("zapif.host", "ZAPIF_HOST", "localhost");
     static final int    PORTA              = Integer.parseInt(configuracao("zapif.port", "ZAPIF_PORT", "5001"));
     static final int    SEGUNDOS_RETRY     = 5;
