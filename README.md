@@ -1,158 +1,68 @@
-# ZapIF — Real-Time Chat with JavaFX + Sockets
+# ZapIF — Java desktop chat over TCP
 
-> Project built for the **Programming Language 1** course.
-> The goal is to explore, hands-on, how **threads**, **TCP socket connections** and **JavaFX user interfaces** work, bringing these concepts together in a complete client-server chat application.
+A client/server chat application where people connect from a JavaFX desktop
+client, join a room and exchange messages through a plain Java TCP server.
 
-Client-server chat system over TCP. The server runs as a single process and clients connect through a JavaFX desktop app.
+**Status:** Academic project · Programming Language 1.
 
-```
-Client A ──── TCP ───► Server (port 5001) ◄──── TCP ──── Client B
-```
+[![CI](https://github.com/ErickHTF/ZapIF/actions/workflows/ci.yml/badge.svg)](https://github.com/ErickHTF/ZapIF/actions/workflows/ci.yml)
 
----
+[Run locally](#run-locally) · [Development guide](docs/development.md) ·
+[Architecture](docs/architecture.md) · [TCP protocol](docs/protocol.md)
 
-## Screenshots
+| Login                                              | Room list                                                               | Live chat                                                               |
+| -------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| ![JavaFX login screen](docs/screenshots/login.png) | ![Chat client with rooms and welcome screen](docs/screenshots/home.png) | ![Live conversation in the geral chat room](docs/screenshots/salas.png) |
 
-| Login | Home | Chat Room |
-|:---:|:---:|:---:|
-| ![Login](docs/screenshots/login.png) | ![Home](docs/screenshots/home.png) | ![Room](docs/screenshots/salas.png) |
+_The interface is in Portuguese. Screenshots show two clients exchanging messages over the running local server._
 
----
+## Overview
 
-## Structure
+ZapIF explores socket communication, server concurrency and desktop UI
+programming through a small chat application.
 
-```
-ZapIF/
-├── pom.xml          # aggregator pom (server and client modules)
-├── mvnw, mvnw.cmd   # Maven Wrapper — no need to have Maven installed
-├── .mvn/wrapper/
-│
-├── server/          # Server (plain Java + SQLite)
-│   ├── pom.xml
-│   └── src/main/java/server/
-│       ├── Servidor.java            # entry point — ServerSocket + thread pool
-│       ├── ManipuladorCliente.java  # one thread per client, parses the protocol
-│       ├── RegistroSessao.java      # online users (prevents duplicate login)
-│       ├── Sala.java                # groups clients, broadcasts messages
-│       └── BancoDados.java          # SQLite: users, rooms, messages
-│
-├── client/          # Client (JavaFX 21)
-│   ├── pom.xml
-│   └── src/main/
-│       ├── java/
-│       │   ├── module-info.java
-│       │   └── client/
-│       │       ├── Main.java                          # JavaFX entry point
-│       │       ├── network/Conexao.java               # socket + automatic retry
-│       │       ├── network/OuvinteMensagem.java       # message listener
-│       │       ├── network/OuvinteStatusConexao.java  # connection status listener
-│       │       ├── ui/ControladorLogin.java           # login/sign-up screen
-│       │       ├── ui/ControladorChat.java            # main chat screen
-│       │       └── model/{Usuario,Mensagem}.java
-│       └── resources/client/
-│           ├── icon.png
-│           └── ui/
-│               ├── login.fxml
-│               ├── chat.fxml
-│               └── style.css
-│
-├── docs/screenshots/  # images used in this README
-└── uml/               # diagrams (Astah + PlantUML) and scope
-```
+- Register an account and sign in from the JavaFX client.
+- Join the default `geral`, `off-topic` and `ajuda` rooms.
+- Exchange messages and view recent room history.
+- See online users and room activity.
+- Reconnect automatically if the server connection drops.
 
----
+## Stack
 
-## Prerequisites
+| Layer               | Technologies                                       |
+| ------------------- | -------------------------------------------------- |
+| Desktop client      | Java 17, JavaFX 21, FXML                           |
+| Chat server         | Java 17, TCP sockets, bounded executor             |
+| Storage             | SQLite                                             |
+| Build and packaging | Maven Wrapper, JavaFX Maven plugin, jlink/jpackage |
+| Verification        | Maven build, GitHub Actions                        |
 
-| Tool | Minimum version | How to check |
-|---|---|---|
-| JDK | 17 | `java -version` |
-| Maven | 3.8 (optional) | `mvn -version` |
+## Run locally
 
-The project ships with the **Maven Wrapper** (`./mvnw` on Linux/Mac, `mvnw.cmd` on Windows), which downloads Maven 3.9.6 on first run. If you'd rather use an installed Maven, replace `./mvnw` with `mvn` in the commands below. All commands run **from the repository root**.
-
-> **Windows**: make sure `JAVA_HOME` points to JDK 17+ and that `%JAVA_HOME%\bin` is on your `PATH`. Use `mvnw.cmd` instead of `./mvnw`.
-
----
-
-## Getting Started
-
-### Step 1 — Build and start the server
-
-Open a terminal at the project root:
+Install **JDK 17+**. Maven comes through the included wrapper.
 
 ```bash
-./mvnw package          # builds server and client
+git clone https://github.com/ErickHTF/ZapIF.git
+cd ZapIF
+./mvnw package
+```
+
+Start the server in one terminal:
+
+```bash
 java -jar server/target/zapif-server-1.0-SNAPSHOT.jar
 ```
 
-Expected output:
-```
-Banco de dados pronto.
-Servidor iniciado na porta 5001 (max 100 clientes)
-```
-
-> Three `SLF4J: ...` warnings from the SQLite driver may show up before these lines — they're harmless.
-
-The `chat.db` file (SQLite) is created automatically in the current directory. Keep this terminal open — the server needs to keep running. Press `Ctrl+C` to stop it.
-
-### Step 2 — Start the client
-
-Open **another** terminal, also at the project root:
+Start the JavaFX client in another terminal:
 
 ```bash
 ./mvnw -pl client javafx:run
 ```
 
-The login window opens. Click **Cadastrar** (Sign up) to create an account, then **Entrar** (Log in).
-
-> To open multiple clients (to simulate a conversation), run `./mvnw -pl client javafx:run` again in additional terminals.
-
-### Connecting two computers on the same network
-
-By default the client connects to `localhost:5001`. Pointing it at another computer **doesn't require recompiling**:
-
-1. Find the local IP of the computer running the server:
-   - Windows: `ipconfig` → "IPv4 Address"
-   - Linux/Mac: `ip a` or `ifconfig`
-2. On the other computers, start the client passing the IP:
-   ```bash
-   ./mvnw -pl client javafx:run -Dzapif.host=192.168.0.10
-   ```
-   Or use environment variables:
-   ```bash
-   ZAPIF_HOST=192.168.0.10 ./mvnw -pl client javafx:run       # Linux/Mac
-   ```
-   ```powershell
-   $env:ZAPIF_HOST="192.168.0.10"; .\mvnw.cmd -pl client javafx:run   # Windows (PowerShell)
-   ```
-3. Allow port 5001 (TCP) through the firewall on the server machine.
-
-| Setting | Property (`-D`) | Environment variable | Default |
-|---|---|---|---|
-| Server host | `zapif.host` | `ZAPIF_HOST` | `localhost` |
-| Server port | `zapif.port` | `ZAPIF_PORT` | `5001` |
-
-The `-D` property takes precedence over the environment variable. Outside Maven (e.g. the image built by `jlink`), pass the property straight to the JVM: `client/target/image/bin/java -Dzapif.host=192.168.0.10 -m client/client.Main`.
-
-> The **server** port is fixed in `Servidor.PORTA` (5001); `zapif.port` only changes where the client connects.
-
----
-
-## Troubleshooting
-
-| Symptom | Likely cause | Fix |
-|---|---|---|
-| `Unable to access jarfile server/target/...` | Maven didn't build it | Run `./mvnw package` before `java -jar` |
-| "Sem conexão — reconectando..." / "Serviço: sem conexão" banner | Server isn't running or wrong host | Start the server first (Step 1) and check `zapif.host` |
-| `Erro fatal no servidor: Address already in use` | Another process is using port 5001 | `netstat -ano \| findstr :5001` (Windows) or `lsof -i :5001` (Linux/Mac) and kill the process |
-| `UnsatisfiedLinkError` / `JavaFX runtime components are missing` | JRE without JavaFX | Use JDK 17+ and run via `./mvnw -pl client javafx:run`, not `java -jar` |
-| Login hangs for 10 s | Server isn't responding | Check that the server is up and reachable |
-| `Usuário já está conectado em outra sessão` | Same user logged in on another client | Close the other session or use a different user |
-
----
-
-## Message Protocol
+Register an account in the client, then sign in and choose a room. Open another
+client to try a conversation. The server creates `chat.db` in its current
+working directory. See the [development guide](docs/development.md) for network
+configuration, packaging and troubleshooting.
 
 Plain text, one message per line, fields separated by `|`. Lines longer than 4096 characters are rejected. Usernames containing `|` are rejected; in room names and message text the `|` is stripped.
 
@@ -224,41 +134,42 @@ The red "Sem conexão — reconectando..." banner appears in `DESCONECTADO` and 
 ### Server (fat jar)
 
 ```bash
-./mvnw -pl server package
-# produces: server/target/zapif-server-1.0-SNAPSHOT.jar (with the SQLite driver bundled)
-java -jar server/target/zapif-server-1.0-SNAPSHOT.jar
+./mvnw verify
 ```
 
-### Client (native installer)
+The project builds three Maven modules: the root aggregator, TCP server and
+JavaFX client. The repository currently has no automated test sources.
 
-```bash
-./mvnw -pl client package javafx:jlink   # builds a runtime image in client/target/image
-client/target/image/bin/java -m client/client.Main   # test the image
+## Architecture
 
-# installer (run on the target OS; --type: exe/msi on Windows, dmg/pkg on Mac, deb/rpm on Linux)
-jpackage --runtime-image client/target/image --module client/client.Main \
-         --name ZapIF --dest client/target/dist --type exe
+```mermaid
+flowchart LR
+    A[JavaFX client A] <-->|TCP line protocol| S[Java server]
+    B[JavaFX client B] <-->|TCP line protocol| S
+    S -->|JDBC| DB[(SQLite)]
 ```
 
----
+Each client has a socket connection handled by the server's executor. The server
+authenticates users, tracks active rooms and broadcasts messages to room members.
+The client reads socket events off the JavaFX thread and dispatches UI updates
+through `Platform.runLater`.
 
-## Default Rooms
+See the [architecture guide](docs/architecture.md) for client connection states
+and implementation decisions. The [protocol guide](docs/protocol.md) documents
+message framing and local storage.
 
-Created automatically if they don't exist:
+## Documentation
 
-- `geral`
-- `off-topic`
-- `ajuda`
+| Guide                                        | Contents                                                      |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| [Development](docs/development.md)           | Build, run, host configuration, packaging and troubleshooting |
+| [Architecture](docs/architecture.md)         | Client/server flow and design decisions                       |
+| [TCP protocol and storage](docs/protocol.md) | Message types, field limits and SQLite schema                 |
+| [UML diagrams](uml/)                         | Scope, use cases, packages and sequence diagrams              |
 
----
+## Project context
 
-## Design Decisions
+Developed for the Programming Language 1 course. The project focuses on learning
+how TCP sockets, concurrent clients and JavaFX interfaces work together.
 
-| Decision | Rationale |
-|---|---|
-| Thread-per-client on the server | simple, no external framework |
-| ExecutorService (pool of 100) | avoids unbounded thread creation under load |
-| CopyOnWriteArrayList for room clients | frequent reads, rare writes |
-| PBKDF2 + salt for hashing | resists rainbow tables with no extra dependency |
-| Platform.runLater() centralized in Conexao | controllers don't need to know about threading |
-| Limited split in the parser (`split("\\|", 4)`) | the text field can contain `\|` without breaking parsing |
+No license is currently included in this repository.
