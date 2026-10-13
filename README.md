@@ -6,6 +6,7 @@ client, join a room and exchange messages through a plain Java TCP server.
 **Status:** Academic project · Programming Language 1.
 
 [![CI](https://github.com/ErickHTF/ZapIF/actions/workflows/ci.yml/badge.svg)](https://github.com/ErickHTF/ZapIF/actions/workflows/ci.yml)
+![Java 17](https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white) ![JavaFX](https://img.shields.io/badge/JavaFX-21-4A7EBB) ![Maven](https://img.shields.io/badge/Maven-Build-C71A36?logo=apachemaven&logoColor=white)
 
 [Run locally](#run-locally) · [Development guide](docs/development.md) ·
 [Architecture](docs/architecture.md) · [TCP protocol](docs/protocol.md)
