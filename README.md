@@ -65,7 +65,74 @@ client to try a conversation. The server creates `chat.db` in its current
 working directory. See the [development guide](docs/development.md) for network
 configuration, packaging and troubleshooting.
 
-## Verification
+Plain text, one message per line, fields separated by `|`. Lines longer than 4096 characters are rejected. Usernames containing `|` are rejected; in room names and message text the `|` is stripped.
+
+| Message | Direction | Description |
+|---|---|---|
+| `REGISTER\|name\|password` | client → server | Sign up |
+| `LOGIN\|name\|password` | client → server | Authenticate |
+| `JOIN\|room` | client → server | Join a room (leaves the previous one, if any) |
+| `LEAVE\|room` | client → server | Leave the current room (back to the home screen) |
+| `MSG\|room\|name\|text` | both | Send/receive a message — the server uses the authenticated username, not the one sent |
+| `PONG` | client → server | Reply to `PING` |
+| `ROOMS\|room1,room2,...` | server → client | Room list after login |
+| `ONLINE\|total\|room1:n,room2:n,...` | server → client | Online users and per-room count (sent to that client after login, and broadcast on every join/leave/disconnect) |
+| `HISTORY\|room\|msg1\|msg2\|...` | server → client | Last 50 messages when joining a room (`[HH:mm] name: text`, with date separators) |
+| `PING` | server → client | Heartbeat every 20 s after login |
+| `OK\|context` | server → client | Acknowledgement (`OK\|REGISTER`, `OK\|LOGIN`) |
+| `ERROR\|reason` | server → client | Descriptive error |
+
+Join/leave notices (`[nome entrou]`, `[nome saiu]`, `[nome desconectou]`) are sent as free-form text lines to the other members of the room. The current client ignores these lines.
+
+The server closes the connection if it receives nothing for 45 s (the client automatically answers `PING` with `PONG`).
+
+### Validated limits
+
+| Field | Limit |
+|---|---|
+| Username | 3–24 characters, no `\|` |
+| Password | 6–64 characters |
+| Message text | 1–500 characters (excess is truncated), `\|` stripped |
+| Room name | up to 64 characters, `\|` stripped; must exist in the database |
+
+---
+
+## Database (SQLite)
+
+Tables are created automatically on first run:
+
+```sql
+usuarios  (id, nome UNIQUE, senha_hash, salt)
+salas     (id, nome UNIQUE)
+mensagens (id, sala_nome, usuario, texto, timestamp)
+```
+
+Passwords are stored with **PBKDF2-HMAC-SHA256** + a random per-user salt (100,000 iterations).
+
+---
+
+## Client Architecture
+
+```
+JavaFX thread (UI)              "chat-connect" thread (daemon)
+├── ControladorLogin            ├── Socket.connect()
+├── ControladorChat             ├── readLine() loop
+└── reacts to Platform.runLater() └── Platform.runLater() → notifies listeners
+```
+
+### Connection states
+
+```
+CONECTANDO → CONECTADO → (drop) → DESCONECTADO → retry 5s → CONECTANDO ...
+```
+
+The red "Sem conexão — reconectando..." banner appears in `DESCONECTADO` and disappears once reconnected.
+
+---
+
+## Packaging for Distribution
+
+### Server (fat jar)
 
 ```bash
 ./mvnw verify
